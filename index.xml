@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Data Science Diarist</title>
+    <link>http://example.org/</link>
+    <description>Recent content on Data Science Diarist</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 22 Jul 2019 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="http://example.org/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Mapping the Underlying Social Structure of Reddit</title>
+      <link>http://example.org/post/mapping-the-underlying-social-structure-of-reddit/</link>
+      <pubDate>Mon, 22 Jul 2019 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/post/mapping-the-underlying-social-structure-of-reddit/</guid>
+      <description>Reddit is a large online hub for discussing politics, culture, hobbies, personal issues, and many other topics.</description>
+    </item>
+    
+    <item>
+      <title>Building a Recommendation System with Beer Data</title>
+      <link>http://example.org/post/building-a-recommendation-system-with-beer-data/</link>
+      <pubDate>Tue, 16 Jul 2019 00:00:00 +0000</pubDate>
+      
+      <guid>http://example.org/post/building-a-recommendation-system-with-beer-data/</guid>
+      <description>Beer culture in the United States has changed dramatically in the past decade or so. One reflection of this is that the number of small-scale breweries has increased in every state in the country. This trend is also reflected in the development of a vibrant community of people who rate, review, and share information about beers online. Websites like BeerAdvocate, RateBeer, and Untappd provide forums for beer drinkers to discuss their favorite beers with each other.</description>
+    </item>
+    
+  </channel>
+</rss>

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head> </head>
+  <body class="body">
+    <div class="container">
+      <div class="content center">
+        
+        <h6 class="error" id="password-error" style="color:red"><strong></strong></h6>
+        <form method="POST">
+          <label for="password">Password</label>
+          <input
+            class="u-full-width"
+            type="password"
+            placeholder="password"
+            name="aerobatic-password"
+            id="aerobatic-password"
+          />
+          <input class="button-primary" type="submit" value="Submit" />
+        </form>
+        
+      </div>
+    </div>
+    
+    
+    <script>
+      if (/fail=1/.test(location.search)) {
+        document.getElementById('password-error').innerHTML = 'Incorrect Password';
+      }
+    </script>
+  </body>
+</html>

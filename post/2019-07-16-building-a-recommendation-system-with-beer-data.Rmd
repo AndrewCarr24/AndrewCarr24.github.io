@@ -1,0 +1,362 @@
+---
+title: Building a Recommendation System with Beer Data
+author: Andrew Carr
+date: '2019-07-16'
+slug: building-a-recommendation-system-with-beer-data
+categories: []
+tags: []
+---
+
+Beer culture in the United States has changed dramatically in the past decade or so.  One reflection of this is that the number of small-scale breweries has increased in every state in the country.  This trend is also reflected in the development of a vibrant community of people who rate, review, and share information about beers online.  Websites like BeerAdvocate, RateBeer, and Untappd provide forums for beer drinkers to discuss their favorite beers with each other.  Surprisingly, these sites differ from product marketplaces such as Amazon in that they do not recommend new products to users based on users' previous evaluations.
+
+Many of these sites have accumulated enough information about users' beer preferences to train systems for recommending beers based on users' tastes.  This inspired me to create my own recommendation engine by scraping the data on some of these sites.  While some beer sites prohibit web scraping outright, others only disallow scraping their data for commercial use.  Others place no restrictions on scraping at all.  For this project, I only scraped sites that did not proscribe scraping in a robots.txt file.  Ethical (and legal) web scraping has been made easier with the recent development of the polite package, which you should check out (https://github.com/dmi3kno/polite).
+
+Through scraping these sites, I managed to compile a dataset of approximately 5.5 million ratings of about 24.5 thousand beers from roughly 100 thousand users.  This data include in-depth reviews along with metadata on both beers (e.g. brewery location, beer style) and users (gender and age, location).  I will use an abridged version of this dataset for this post.  This data includes only the beer names, user ratings, and unique ids for each user.  This is the data I will use to make my recommendation engine.  You can download this data here - https://duke.box.com/v/bbspring-beer-data.  Create a Box account to download this data.  The source code for this project can be found on my github page (https://github.com/datadiarist/).
+
+The internet has no shortage of tutorials for coding up recommendation systems in R.  Many of these, however, are based on smaller datasets and use ready-made functions for training recommendation models from packages like recommenderlab.  In this post, I choose instead to code a recommendation system from scratch.  This is necessitated by the size of my dataset; some of the tools in recommenderlab are not meant to accommodate datasets with millions of observations.  I also do this to make clear, both to myself and to the reader, the math on which this model is based.
+
+In the first part of this project, I'm going to import my data as a Spark dataframe and manipulate it using functions from the sparklyr package.  Although R has no trouble fitting this dataset (it's only 292Mb) into the workspace, I find that I can manipulate this data much faster using Spark.  I should note that I'm working on a 2018 Macbook Pro with 12 cores.  If your computer has fewer cores, you may prefer to import the data as a regular dataframe (use read_csv from the readr package; it's faster than read.csv).  Sparklyr has a dplyr backend, so all my code will work for regular dataframes so long as the dplyr package is loaded.  However, this code may take a prohibitively long time to run if you're working on regular dataframes.       
+
+Let's begin by importing the data and seeing what it looks like.  
+
+```{r, include = FALSE}
+library(readr)
+library(dplyr)
+library(Matrix)
+library(irlba)
+library(lsa)
+library(doParallel)
+library(parallel)
+library(foreach)
+library(purrr)
+library(sparklyr)
+
+# Configuring Spark environment  
+Sys.setenv(JAVA_HOME = "/Library/Java/JavaVirtualMachines/jdk1.8.0_151.jdk/Contents/Home")
+conf <- spark_config()
+conf$`sparklyr.shell.driver-memory` <- "20G"  
+conf$spark.memory.fraction <- 0.6
+sc <- spark_connect(master = "local", config = conf, version = "2.1.0")
+```
+
+```{r, include = TRUE}
+beer_data <- spark_read_csv(sc, "beer_data_fin.csv")
+head(beer_data)
+```
+
+We can see that this Spark dataframe contains three columns.  First, beer_full is a character vector with the beer name.  To avoid confusing beers with the same name from different breweries, the brewery name precedes the beer name for every element in this vector.  Next the user_score column gives the rating on a scale of 1 to 5.  Finally, the user_id column shows the id of the user for a given beer rating.  Each row represents a beer rating from a given user.  
+
+The first thing I have to do is convert my data into a suitable form for creating a recommendation system.  I'm going to use an approach called item-based collaborative filtering, which recommends new products based on similarities between these products and the products the user has rated in the past.  Before compute similarities among beers, I first convert my data into a "user-by-beer" matrix.  In this matrix, each row will contain all of the ratings from a given user.  Because most users have not rated most beers, this will be a very sparse matrix.  Given that we have about 100 thousand users and 24.5 thousand beers, the dimensions of this matrix will be about 100,000x24,500 (~ 2.5 billion cells!).  Clearly, we will have trouble fitting this data into the workspace as a conventional matrix. Fortunately, the sparsity of the matrix means that we should have no trouble working with the data as a sparse matrix.  The Matrix package has tools that will help with this.  
+
+Sparse matrices can be thought of as being made up of three components: the row number ("i") of a non-empty cell, the column number ("j") of a non-empty cell, and the value ("x") in that cell (i.e. the ratings).  To create a vector of row numbers for the sparse matrix, I first find the number of ratings associated with each user.  I then repeat the user_id the number of times that this user has posted a rating.  For example, if user 1 has 3 ratings and user 2 has 4 ratings, the i vector would begin [1, 1, 1, 2, 2, 2, 2].  In other words, the row number for the first 3 entries of the sparse matrix is 1 and the row number of the next 4 entries is 2.
+
+```{r}
+# Find number of users in the data 
+num_users <- beer_data %>% group_by(user_id) %>% summarise(count = n()) %>%
+             sdf_nrow
+
+i <- beer_data %>% 
+     # Find number of ratings for each user and sort by user_id
+     group_by(user_id) %>% summarise(count = n()) %>% arrange(user_id) %>% 
+     # Convert from Spark dataframe to tibble and extract
+     # count (number of ratings) vector
+     select(count) %>% collect %>% .[["count"]] 
+
+# Repeat user_id by the number of ratings associated with each user
+i <- rep(1:num_users, i)
+```
+
+Producing a vector of columns associated with each user rating is a bit more tricky.  First, I create a set of ids for each unique beer in the Spark dataframe.  I merge these to the original dataframe, group the dataframe by user_ids, and use the collect_list function to produce a dataframe of beer ids nested in user ids.  Finally, I arrange the data by user_id (this part is crucial to making sure the rows and columns match up) and use the explode function to unnest the lists of beer_ids associated with each user.  What I'm left with as a vector of column numbers that represent beer ids of user ratings and that are sorted by user id.  I've annotated the code below to make this as clear as possible.  If you have any questions about how this works, please ask them in the comments section.        
+
+```{r}
+# Creating Spark dataframe with ids for each beer 
+beer_key <- beer_data %>% distinct(beer_full) %>% sdf_with_sequential_id
+
+# Merging unique beer ids to the beer data with left_join 
+j <- left_join(beer_data, beer_key, by = "beer_full") %>%
+     # Grouping by user_id, nesting beer_ids in user_ids, and sorting by user_id
+     group_by(user_id) %>% summarise(user_beers = collect_list(id)) %>%
+     arrange(user_id) %>% 
+     # Unnesting beer ids (with explode), bringing data into R,
+     # and extracting column vector 
+     select(user_beers) %>% mutate(vec = explode(user_beers)) %>% select(vec) %>%
+     collect %>% .[["vec"]]
+
+# Turning beer key (beers by unique id) from Spark dataframe to regular dataframe
+beer_key <- beer_key %>% collect
+```
+
+Last, I have to extract a vector of user ratings from the Spark dataframe.  To do this I just sort the data by user_id, bring the data into R (with the collect function) and extract the user_score vector.
+
+```{r}
+# Sort data by user_id, bring data into R, and extract user_score vector 
+x <- beer_data %>% arrange(user_id) %>% select(user_score) %>% collect %>%
+     .[["user_score"]]
+```
+
+Finally, I use the sparseMatrix function from the Matrix package to create a sparse matrix.
+
+```{r}
+beer_sparse <- sparseMatrix(i = i, j = j, x = x)
+```
+
+Here's how the sparse matrix is represented in R.
+
+```{r}
+head(beer_sparse)
+```
+
+This provides a snapshot of the first six users in the sparse matrix.  The dots represent empty cells, the numbers ratings.  While large for a sparse matrix, this object is only 63Mb, which is manageable for our purposes.  Our next step is to calculate similarity score among beers.  But before we can do this, we need to make some more modifications to the data.
+
+First, I do a partial singular value decomposition (SVD) of the sparse matrix.  An SVD is a kind of matrix factorization that breaks an m by n matrix into three parts: an m by m matrix ("U"), an m by n diagonal matrix ("d"), and an n by n matrix ("V").  A partial SVD keeps only the columns and rows in U and V that correspond with the largest singular values in d.  The irlba package in R lets you specify the number of singular values to use in a partial SVD.  Most useful for our purposes, irlba is able to perform partial SVDs on sparse matrices.  
+
+In sum, the partial SVD can be thought of as a dimensionality reduction technique that makes performing operations on large matrices less computationally expensive.  This is a particularly useful technique for sparse matrices, which can often be transformed into smaller matrices with little loss of information (given that many of the rows are linear combinations of other rows).
+
+I make the arbitrary choice here to keep the 25 largest singular values, factoring my sparse matrix into three component matrices: an ~105,000x25 matrix (U), a 25x25 matrix (d), and a ~25x24,500 matrix (V).  The irlba package automatically transposes V, returning a 24,500x25 matrix.  Perhaps in a future post I will consider the implications of how many singular values I use for the validity of the recommender system.  For now, here's the code to perform the partial SVD.
+
+```{r}
+beer_sparse_svd <- irlba(beer_sparse, 25)
+```
+
+The matrix that interests me is V, which can be thought of as representing ratings patterns for 24,500 beers (the rows) along 25 latent dimensions (the columns), albeit at a loss of some information.  Here's a peak at V.
+
+```{r}
+head(beer_sparse_svd$v)
+```
+
+This displays numbers that place 6 beers in a 25-dimensional space.  These numbers don't mean anything prima facie. They are both positive and negative and cluster very closely to 0.  Hopefully, calculating similarity scores among these 25-dimensional vectors will produce results that make sense.  I am now ready to calculate similarity scores among my ~24,500 beers.  While there are many options out there for measuring similarity between vectors, I choose one of the simplest and most commonly-used ones: cosine distance.  This will likely not produce the best possible recommendation engine from this data; I choose this measure to limit the length of this post and because it's suitable for a demonstration of how to code a recommendation system on big-ish data from scratch in R.  The cosine distance between two vectors is simply the dot product of the vectors divided by the product of the norms of these vectors.  When these vectors are the same this distance will be 1.  Otherwise, we will get a number between 0 and 1.  I calculate the cosine distance with a function from the lsa package.
+
+Before we can find similarity scores among the beers in the data, we must consider one last issue.  Calculating similarity scores among 24,500 beers would produce 24,500 choose 2, or roughly 300 million, similarity scores.  We once again find ourselves exceeding the size limits of what can be stored in the R workspace.  I sidestep this issue by computing all similarity scores for each beer and only keeping the largest 500.  500 is another arbitrary cutoff and in a future post I may examine how varying this cutoff affects the results. 
+
+Although the 500 cutoff resolves the size concern, we are still left with the task of computing 300 million similarity scores, most of which will be discarded.  To deal with this, I use the foreach, parallel, and doParallel packages to utilize the 12 cores of my computer for this task.  
+
+```{r, eval = FALSE}
+# Setting up and registering a cluster for parallel processing
+cl <- makeCluster(detectCores() - 1)
+registerDoParallel(cl)
+
+# Setting up the foreach loop and pre-loading packages used within the loop
+item_similarity_matrix <- foreach(i = 1:nrow(beer_key),
+                             .packages = c("dplyr", "Matrix", "lsa")) %dopar% {
+  
+  # Calculating the cosine distances between a given beer (i) and all the
+  # beers in the sparse matrix
+  sims <- cosine(t(beer_sparse_svd$v)[,i], t(beer_sparse_svd$v))   
+  
+  # Finding arrange the cosine distances in descending order, 
+  # finding the 501th biggest one
+  cutoff <- sims %>% tibble %>% arrange(desc(.)) %>% .[501,] %>% .[["."]]
+  
+  # Limiting the beer_key dataframe to beers with large enough
+  # similarity scores
+  sims.test <- beer_key %>% .[which(sims >= cutoff & sims < 1),]
+  
+  # Appending similarity scores to the abridged dataframe and sorting by
+  # similarity score
+  sims.test <- sims.test %>% mutate(score = sims[sims >= cutoff & sims < 1]) %>%
+    arrange(desc(score))
+  
+  # Changing column names of the final tibble
+  names(sims.test) <- c(beer_key[i,] %>% .[["beer_full"]], "id", "score") 
+  
+  return(sims.test)
+}
+```
+
+On my computer, this code took about fifteen minutes to run.  On a computer with fewer cores, this will take a lot longer.  This code returns a list of ~24,500 tibbles, each with 500 rows.  This is a large object, 1.4Gb.  If this affects R's performance we can always return to this bit of code and change 500 to a smaller number.  
+
+```{r, echo = FALSE}
+load("item_similarity_matrix.RData")
+```
+
+Let's have a look at a tibble from this list.  I'll search for one of my favorite beers, Ballast Point Sculpin, to find out which beers are most similar to the Sculpin. 
+
+```{r}
+# Searching for Sculpin in the beer_key
+grep("Sculpin", beer_key$beer_full, value = TRUE)
+```
+
+As you can see, many kinds of Sculpins appear in the dataset.  I'll index the list (called 'item_similarity_matrix') for the original Sculpin.
+
+```{r}
+# Beers similar to Sculpin 
+item_similarity_matrix[grep("Sculpin", beer_key$beer_full)[6]]
+```
+
+This tibble displays the 500 most similar beers to Sculpin sorted in decreasing order of their similarity.  In my opinion as an inveterate beer drinker, this list has face validity.  The list consists mainly of American IPAs, which is what Sculpin is.  I can attest to the similarity of some of the beers on this list (Bear Republic's Racer 5, Stone's Enjoy By) to Sculpin.  It's also worth noting that many of the beers on this list come from Californian breweries, which is where Sculpin is brewed.  This likely reflects a tendency of reviewers to be more familiar with beers in their own region.  This sort of regional clustering presents problems for the validity of the recommendation system, especially if one's region has no bearing on one's beer preferences.  Product ratings are not randomly distributed across users and therefore beer similarity scores are partly based on factors that are not related to qualities of the beers themselves.
+
+Still, I'm encouraged by the list of beers similar to Sculpin.  In fact, these are some of my favorite beers.  Just to show that I'm not cherry picking, I'll randomly select a beer from my list of beers and check its similarity scores for face validity.  
+
+```{r}
+set.seed(123)
+item_similarity_matrix[base::sample(nrow(beer_key), 1)]
+```
+
+Here we have a Saison from a smaller Chicago-based brewery.  Given that reviewers of this beer were way more likely to review other beers from Pipeworks, most of the top beers on this list are Pipeworks beers.  The two non-Pipeworks beers in the top ten come from other breweries based in Illinois.  Again, this is a common issue with recommendation systems.  For instance, I've been recommended movies on Netflix that have cast members in common with movies I've rated highly.  Some people like receiving recommendations for movies with  their favorite actors, just as some people may wish to receive recommendations for other beers from their favorite breweries.  However, for me an ideal recommendation system would estimate similarity by the most intrinsic features of a product (in our case, beer taste).  It may be fair to conclude from these preliminary validity checks that this recommendation system will work better for beers from more established breweries that distribute beers on a national scale.  For these beers, patterns in user ratings are more likely to be based on beer taste and less likely to be based on brewery and region.  
+
+For the last part of this post, I will write a function that takes a 24542 (the number of beers) length vector and returns a list of beer recommendations.  This vector will have 0's for beers that the user has not rated and values between 1 and 5 for beers that the user has rated. Let's return to our sparse matrix and sample a user who has reviewed a lot of beers.  I happen to know that the user with id 3 has rated a few thousand beers, so we'll use this user as our example user.
+
+```{r}
+
+# Creating a 24542-length vector of beer ratings for user 3
+example_user <- beer_sparse[3,]
+```
+
+To predict beer ratings based on a user's past ratings, I use the following formula:
+
+![](/post/2019-07-16-building-a-recommendation-system-with-beer-data_files/Screen Shot 2019-07-19 at 5.05.07 PM.png)
+
+Following this equation, the predicted rating of a given beer is just the average of the ratings of similar beers weighted by their similarity scores.  My function will recommend a set of beers based on which beers have the highest predicted ratings according to this equation.
+
+The first thing that I need to is find the beer ids of the beers that the user has already rated.  This is easy - I just search the vector for non-zero elements.
+
+```{r}
+rated_beer_ids <- which(example_user != 0)
+```
+
+Next, I pull the similarity scores of all beers that are similar to at least one beer that the user has rated.  For each of these beers I only extract similarity scores between the beer and the rated beers.  I use the map function from the purrr package to do this. 
+
+```{r}
+sim_scores <- map(item_similarity_matrix, ~.x %>%
+                    filter(id %in% rated_beer_ids) %>%
+                    .[["score"]])
+```
+
+Now I want to create a vector with candidate beers to recommend to the user.  These are beers that are similar to at least 5 of the beers that the user has rated.  Why 5 and not 1?  My thinking here is that my equation would give beers with one similar beer to a rated beer a predicted rating of that beer's rating.  I am more confidence in a predicted rating that is based on a weighted average of several rated beers, rather than one or a few weighted beers.  I may adjust this parameter in the future to see how it affects model validity.
+
+```{r}
+candidate_beer_ids <- which(sim_scores %>% map(., ~length(.x) >= 5) %>% unlist)
+```
+
+This vector, candidate_beer_ids, gives the positions of beers that have at least 10 similar beers to beers the example user has rated.  It is likely that some of these include beers the user has rated.  We don't want to predict beer ratings for rated beers, so I filter these.
+
+```{r}
+candidate_beer_ids <- candidate_beer_ids[!(candidate_beer_ids %in%
+                                             rated_beer_ids)]
+
+# Number of candidate beers 
+length(candidate_beer_ids)
+```
+
+I am now ready to compute predicted ratings for the candidate beers (i.e. beers that have some degree of similarity to at least 5 beers that the user has rated).  I start by calculating the denominators of these predicted ratings.  For each candidate beer, is this the sum of similarity scores to beers the user has rated.
+
+```{r}
+denoms <- map(item_similarity_matrix[candidate_beer_ids], ~.x %>%
+                filter(id %in% rated_beer_ids) %>% .[["score"]] %>% sum)
+```
+
+The numerators of these predicted ratings are the products of similarity scores and ratings of beers the user has rated.  I use the map function to create two lists - one of vectors of similarity scores for each candidate beer and one of vectors of ratings of similar beers to each candidate beer.  Finally, I use purrr's map2 function, which takes two lists as inputs, and take sums of the dot products of these lists of vectors.  The resulting list contains the numerators of predicted ratings for each candidate beer.
+
+```{r}
+# List of similarity scores 
+sims_vecs <- map(item_similarity_matrix[candidate_beer_ids],
+                 ~.x %>% filter(id %in% rated_beer_ids) %>% .[["score"]])
+
+# List of ratings 
+ratings_vecs <- map(item_similarity_matrix[candidate_beer_ids], 
+                     ~example_user[.x %>% filter(id %in% rated_beer_ids) %>%
+                                     .[["id"]]])
+
+nums <- map2(sims_vecs, ratings_vecs, ~sum(.x*.y))
+```
+
+The last step is to divide each element in the numerators list by its corresponding denominator from the denominators list to get predicted ratings.  I once again use the map2 function for this.
+
+```{r}
+predicted_ratings <- map2(nums, denoms, ~.x/.y)
+```
+
+Now that I have a list of predicted ratings for candidate beers I can create a tibble that displays beer names and their predicted ratings.  I sort this in descending order of predicted rating and sample the first few rows to see which beers my recommendation system would recommend this user.
+
+```{r}
+pred_ratings_tbl <- tibble(beer_full = beer_key %>% 
+                          filter(id %in% candidate_beer_ids) %>% .[["beer_full"]], 
+                          pred_rating = predicted_ratings %>% unlist) %>%
+                          arrange(desc(pred_rating))
+head(pred_ratings_tbl)
+```
+
+The top-six recommended beers for this user include 2 American Imperial IPAs, 2 American IPAs, a Belgian pale ale, and an IPL (India Pale Lager).  Apparently the user has a preference for IPAs.  These beers are geographically distributed, although many of them are in New England.  I could check if the user is from New England; this information is in the full data.  Now let's check the face validity of these recommendations.  I'm going to pull a list of some of the top beers that this user has rated.  
+
+```{r}
+tibble(beer_full = beer_key[which(example_user != 0),] %>% .[["beer_full"]], 
+       rating = example_user[which(example_user != 0)]) %>%
+       arrange(desc(rating)) %>% head
+```
+
+These ratings make sense given the user's recommended beers.  Many of these beers are American IPAs, and some of them are American Imperial IPAs.  They also come from a geographically-distributed set of breweries.  We don't see any sign of clustering in New England from this short list; that the recommended beers are disproportionately from New England could be a sign that the highest rated IPA are from New England, or it could be a coincidence.  Of course we could test this by looking at a longer list of this user's favorite beers.  
+
+Instead, I encourage you to try this recommendation system on your own set of beer ratings.  The function below contains the code for computing predicted beer ratings.  Enter a vector of beer ratings and the function will return six recommendations.  To create a vector of beer ratings, first create a 24542-length vector of 0's.  Then, search beer_key to find the position of the beer you want to rate.  I did this with Sculpin above.  Enter your rating in the vector of 0's at the appropriate position.  When you've created your vector of beer ratings, enter it into the function.  One last thing - while the recommendation system discussed above only recommended beers with at least 5 similar beers to beers that the user rated, this function has a default of 3 similarity beers.  This is the second argument of the function, similarity_cutoff.  To change this default, simply enter a number other than 3 as the default.     
+
+
+```{r}
+recommend_beers <- function(input_vec, similarity_cutoff = 3){
+  
+# Replace missing values with 0
+input_vec[is.na(input_vec)] <- 0 
+  
+if(length(input_vec) != nrow(beer_key)){
+  stop("Please enter a 24502-length vector!")}else if(
+  length(input_vec[input_vec > 5 | input_vec < 0]) > 0){
+    stop("Vector can only contain values between 0 and 5!")}
+  
+## ------------------------------------------------------------------------
+rated_beer_ids <- which(input_vec != 0)
+
+## ------------------------------------------------------------------------
+sim_scores <- map(item_similarity_matrix, ~.x %>%
+                    filter(id %in% rated_beer_ids) %>%
+                    .[["score"]])
+
+## ------------------------------------------------------------------------
+candidate_beer_ids <- which(sim_scores %>% 
+                              map(., ~length(.x) >= similarity_cutoff) %>%
+                              unlist)
+
+if(!is_empty(candidate_beer_ids)){
+
+## ------------------------------------------------------------------------
+candidate_beer_ids <- candidate_beer_ids[!(candidate_beer_ids %in%
+                                             rated_beer_ids)]
+
+## ------------------------------------------------------------------------
+denoms <- map(item_similarity_matrix[candidate_beer_ids], ~.x %>%
+                filter(id %in% rated_beer_ids) %>% .[["score"]] %>% sum)
+
+## ------------------------------------------------------------------------
+# List of similarity scores 
+sims_vecs <- map(item_similarity_matrix[candidate_beer_ids],
+                 ~.x %>% filter(id %in% rated_beer_ids) %>% .[["score"]])
+
+# List of ratings 
+ratings_vecs <- map(item_similarity_matrix[candidate_beer_ids], 
+                    ~input_vec[.x %>% filter(id %in% rated_beer_ids) %>%
+                                    .[["id"]]])
+
+nums <- map2(sims_vecs, ratings_vecs, ~sum(.x*.y))
+
+## ------------------------------------------------------------------------
+predicted_ratings <- map2(nums, denoms, ~.x/.y)
+
+## ------------------------------------------------------------------------
+pred_ratings_tbl <- tibble(beer_full = beer_key %>% 
+                             filter(id %in% candidate_beer_ids) %>%
+                             .[["beer_full"]], 
+                           pred_rating = predicted_ratings %>% unlist) %>%
+                           arrange(desc(pred_rating))
+
+head(pred_ratings_tbl) %>% return}else{
+  print("You haven't rated enough beers!")}
+}
+```
+
+Let's test the function on a random user from the data.
+
+```{r}
+set.seed(123)
+recommend_beers(beer_sparse[base::sample(num_users, 1),])
+```
+
+It worked!
+
+If you don't want to bother running this code on your computer, I've created an app that produces recommendations and updates them as you add beer ratings.  Navigate over to the Shiny section of my website to check it out, and thanks for reading!
