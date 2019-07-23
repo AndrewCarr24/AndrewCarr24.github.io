@@ -21,7 +21,19 @@
 	</head>
 
     <body>
-         <link rel="stylesheet"
+        <nav class="nav">
+  <div class="nav-container">
+    <a href="/tale/">
+      <h2 class="nav-title">Data Diarist</h2>
+    </a>
+    <ul>
+      <li><a href="/tale/about">About</a></li>
+      <li><a href="/tale/">Posts</a></li>
+    </ul>
+  </div>
+</nav>
+
+ <link rel="stylesheet"
 href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css">
  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js">
 </script> <script>hljs.initHighlightingOnLoad();</script>
@@ -133,41 +145,41 @@ x &lt;- beer_data %&gt;% arrange(user_id) %&gt;% select(user_score) %&gt;% colle
 <pre class="r"><code>beer_sparse_svd &lt;- irlba(beer_sparse, 25)</code></pre>
 <p>The matrix that interests me is V, which can be thought of as representing ratings patterns for 24,500 beers (the rows) along 25 latent dimensions (the columns), albeit at a loss of some information. Here’s a peak at V.</p>
 <pre class="r"><code>head(beer_sparse_svd$v)</code></pre>
-<pre><code>##               [,1]         [,2]        [,3]          [,4]         [,5]
-## [1,] -0.0256985740 0.0229678228 0.005193778  0.0051384220  0.052757404
-## [2,] -0.0062777787 0.0049419788 0.003314623 -0.0069633190  0.007472983
-## [3,] -0.0005042966 0.0002114207 0.001387032 -0.0003306757  0.001741769
-## [4,] -0.0022645231 0.0058033722 0.001458080 -0.0036489648 -0.003678065
-## [5,] -0.0296513661 0.0466452519 0.003826150  0.0118276998 -0.016366716
-## [6,] -0.0105372982 0.0086427265 0.017151058  0.0074637989  0.001469116
+<pre><code>##               [,1]         [,2]         [,3]          [,4]         [,5]
+## [1,] -0.0256985740 0.0229678228 -0.005193778 -0.0051384220  0.052757404
+## [2,] -0.0062777787 0.0049419788 -0.003314623  0.0069633190  0.007472983
+## [3,] -0.0005042966 0.0002114207 -0.001387032  0.0003306757  0.001741769
+## [4,] -0.0022645231 0.0058033722 -0.001458080  0.0036489648 -0.003678065
+## [5,] -0.0296513661 0.0466452519 -0.003826150 -0.0118276998 -0.016366716
+## [6,] -0.0105372982 0.0086427265 -0.017151058 -0.0074637989  0.001469116
 ##              [,6]         [,7]          [,8]          [,9]        [,10]
-## [1,]  0.032494474 -0.011456998 -0.0108729014  0.0035516823 -0.020489015
-## [2,]  0.010387374 -0.019802582 -0.0009407164 -0.0131732961  0.002966423
-## [3,]  0.001858592 -0.002485591  0.0004080029 -0.0024073091  0.001065007
-## [4,] -0.008207708 -0.008591826  0.0073319230 -0.0007184202 -0.003605576
-## [5,] -0.049587403 -0.043005553  0.0051627987 -0.0237230351 -0.007313664
-## [6,]  0.007417017  0.013712596  0.0028269823 -0.0088606013 -0.011820460
-##              [,11]        [,12]        [,13]        [,14]         [,15]
-## [1,]  0.0155698493 -0.032879244 0.0113961215  0.039494023  0.0008142866
-## [2,] -0.0222479391 -0.047532155 0.0116251008 -0.021787547 -0.0213485210
-## [3,] -0.0027782202 -0.006784769 0.0022113610 -0.005041011 -0.0035659751
-## [4,]  0.0016511631 -0.001963106 0.0003878318 -0.001373413  0.0033941471
-## [5,] -0.0192508819  0.036609922 0.0007755873  0.022602177  0.0226693302
-## [6,]  0.0009004369 -0.014294341 0.0004086656  0.006704642  0.0059271281
+## [1,] -0.032494474  0.011456998 -0.0108729014  0.0035516823  0.020489015
+## [2,] -0.010387374  0.019802582 -0.0009407164 -0.0131732961 -0.002966423
+## [3,] -0.001858592  0.002485591  0.0004080029 -0.0024073091 -0.001065007
+## [4,]  0.008207708  0.008591826  0.0073319230 -0.0007184202  0.003605576
+## [5,]  0.049587403  0.043005553  0.0051627987 -0.0237230351  0.007313664
+## [6,] -0.007417017 -0.013712596  0.0028269823 -0.0088606013  0.011820460
+##              [,11]        [,12]         [,13]        [,14]         [,15]
+## [1,] -0.0155698493 -0.032879244 -0.0113961215  0.039494023 -0.0008142866
+## [2,]  0.0222479391 -0.047532155 -0.0116251008 -0.021787547  0.0213485210
+## [3,]  0.0027782202 -0.006784769 -0.0022113610 -0.005041011  0.0035659751
+## [4,] -0.0016511631 -0.001963106 -0.0003878318 -0.001373413 -0.0033941471
+## [5,]  0.0192508819  0.036609922 -0.0007755873  0.022602177 -0.0226693302
+## [6,] -0.0009004369 -0.014294341 -0.0004086656  0.006704642 -0.0059271281
 ##             [,16]         [,17]        [,18]         [,19]         [,20]
-## [1,]  0.018455648 -0.0198518744 -0.025979319  0.0040638017  2.509825e-02
-## [2,] -0.024394173 -0.0173652077  0.034726167  0.0359433350  3.948809e-03
-## [3,] -0.004901526 -0.0010760466  0.006260497  0.0042772709  4.698769e-05
-## [4,] -0.010084600  0.0001870042 -0.002243230  0.0023221599 -5.838163e-03
-## [5,] -0.001787687 -0.0110909919  0.021767510 -0.0355030003  2.935001e-02
-## [6,]  0.015706574  0.0138034722  0.006490726  0.0006405754  3.582704e-03
-##              [,21]        [,22]         [,23]        [,24]        [,25]
-## [1,]  0.0025110998  0.011861864  0.0045982662  0.011090954 -0.003171912
-## [2,]  0.0007522839 -0.023399740 -0.0024942351 -0.005222280  0.021327800
-## [3,]  0.0001123457 -0.004374983  0.0008616042 -0.003446785  0.001396291
-## [4,]  0.0005898582  0.008568196  0.0060018884 -0.002907136 -0.004491239
-## [5,]  0.0095077022 -0.059850178 -0.0720444669 -0.054606808 -0.091757153
-## [6,] -0.0060200580  0.007056987  0.0165475173 -0.001281160 -0.011646263</code></pre>
+## [1,] -0.018455648  0.0198518744 -0.025979319 -0.0040638017 -2.509825e-02
+## [2,]  0.024394173  0.0173652077  0.034726167 -0.0359433350 -3.948808e-03
+## [3,]  0.004901526  0.0010760466  0.006260497 -0.0042772709 -4.698748e-05
+## [4,]  0.010084600 -0.0001870042 -0.002243230 -0.0023221599  5.838162e-03
+## [5,]  0.001787687  0.0110909919  0.021767510  0.0355030003 -2.935001e-02
+## [6,] -0.015706574 -0.0138034722  0.006490726 -0.0006405754 -3.582702e-03
+##              [,21]        [,22]        [,23]        [,24]        [,25]
+## [1,]  0.0025110953 -0.011861829 -0.004598431 -0.011089507  0.003169127
+## [2,]  0.0007522815  0.023399755  0.002494241  0.005222926 -0.021329421
+## [3,]  0.0001123453  0.004374985 -0.000861592  0.003446859 -0.001396566
+## [4,]  0.0005898593 -0.008568204 -0.006001832  0.002906891  0.004491294
+## [5,]  0.0095077194  0.059850068  0.072044630  0.054602812  0.091765192
+## [6,] -0.0060200612 -0.007056966 -0.016547627  0.001281847  0.011645727</code></pre>
 <p>This displays numbers that place 6 beers in a 25-dimensional space. These numbers don’t mean anything prima facie. They are both positive and negative and cluster very closely to 0. Hopefully, calculating similarity scores among these 25-dimensional vectors will produce results that make sense. I am now ready to calculate similarity scores among my ~24,500 beers. While there are many options out there for measuring similarity between vectors, I choose one of the simplest and most commonly-used ones: cosine distance. This will likely not produce the best possible recommendation engine from this data; I choose this measure to limit the length of this post and because it’s suitable for a demonstration of how to code a recommendation system on big-ish data from scratch in R. The cosine distance between two vectors is simply the dot product of the vectors divided by the product of the norms of these vectors. When these vectors are the same this distance will be 1. Otherwise, we will get a number between 0 and 1. I calculate the cosine distance with a function from the lsa package.</p>
 <p>Before we can find similarity scores among the beers in the data, we must consider one last issue. Calculating similarity scores among 24,500 beers would produce 24,500 choose 2, or roughly 300 million, similarity scores. We once again find ourselves exceeding the size limits of what can be stored in the R workspace. I sidestep this issue by computing all similarity scores for each beer and only keeping the largest 500. 500 is another arbitrary cutoff and in a future post I may examine how varying this cutoff affects the results.</p>
 <p>Although the 500 cutoff resolves the size concern, we are still left with the task of computing 300 million similarity scores, most of which will be discarded. To deal with this, I use the foreach, parallel, and doParallel packages to utilize the 12 cores of my computer for this task.</p>
@@ -411,7 +423,7 @@ src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM
 
         		<footer>
 			<span>
-			&copy; <time datetime="2019-07-22 12:31:23.182882 -0400 EDT m=&#43;0.749869171">2019</time> . Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
+			&copy; <time datetime="2019-07-22 20:24:42.293735 -0400 EDT m=&#43;10.860356817">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
 			</span>
 		</footer>
 

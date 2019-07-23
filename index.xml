@@ -2,30 +2,30 @@
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Data Science Diarist</title>
-    <link>http://example.org/</link>
+    <link>/</link>
     <description>Recent content on Data Science Diarist</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Mon, 22 Jul 2019 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="http://example.org/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
       <title>Mapping the Underlying Social Structure of Reddit</title>
-      <link>http://example.org/post/mapping-the-underlying-social-structure-of-reddit/</link>
+      <link>/post/mapping-the-underlying-social-structure-of-reddit/</link>
       <pubDate>Mon, 22 Jul 2019 00:00:00 +0000</pubDate>
       
-      <guid>http://example.org/post/mapping-the-underlying-social-structure-of-reddit/</guid>
-      <description>Reddit is a large online hub for discussing politics, culture, hobbies, personal issues, and many other topics.</description>
+      <guid>/post/mapping-the-underlying-social-structure-of-reddit/</guid>
+      <description>Since it was founded in 2005, Reddit has developed into a popular place for sharing opinions and ideas, rating web content, and aggregating news on the internet. Reddit is organized into thousands of user-made communities, called subreddits, which cover a broad range of subjects, including politics, sports, technology, personal hobbies, and self-improvement, to name a few. Given that Reddit is structured in this way, it is natural to think of Reddit as a population of users organized into many overlapping communities (subreddits).</description>
     </item>
     
     <item>
       <title>Building a Recommendation System with Beer Data</title>
-      <link>http://example.org/post/building-a-recommendation-system-with-beer-data/</link>
+      <link>/post/building-a-recommendation-system-with-beer-data/</link>
       <pubDate>Tue, 16 Jul 2019 00:00:00 +0000</pubDate>
       
-      <guid>http://example.org/post/building-a-recommendation-system-with-beer-data/</guid>
+      <guid>/post/building-a-recommendation-system-with-beer-data/</guid>
       <description>Beer culture in the United States has changed dramatically in the past decade or so. One reflection of this is that the number of small-scale breweries has increased in every state in the country. This trend is also reflected in the development of a vibrant community of people who rate, review, and share information about beers online. Websites like BeerAdvocate, RateBeer, and Untappd provide forums for beer drinkers to discuss their favorite beers with each other.</description>
     </item>
     
