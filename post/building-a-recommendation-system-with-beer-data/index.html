@@ -8,27 +8,27 @@
 				Building a Recommendation System with Beer Data &middot; Data Science Diarist
 		</title>
 
-		
+
   		<link rel="stylesheet" href="/css/style.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
-		
+
 		<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
 		<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
 		<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 
-		
+
 		<link href="" rel="alternate" type="application/rss+xml" title="Data Science Diarist" />
 	</head>
 
     <body>
         <nav class="nav">
   <div class="nav-container">
-    <a href="/tale/">
+    <a href="/">
       <h2 class="nav-title">Data Diarist</h2>
     </a>
     <ul>
       <li><a href="/tale/about">About</a></li>
-      <li><a href="/tale/">Posts</a></li>
+      <li><a href="https://github.com/datadiarist">Github</a></li>
     </ul>
   </div>
 </nav>
@@ -38,7 +38,7 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js">
 </script> <script>hljs.initHighlightingOnLoad();</script>
 
-        
+
 
 <main>
 	<div class="post">
@@ -51,9 +51,9 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 		<h1 class="post-title">Building a Recommendation System with Beer Data</h1>
 <div class="post-line"></div>
 
-		
 
-		
+
+
 
 
 <p>Beer culture in the United States has changed dramatically in the past decade or so. One reflection of this is that the number of small-scale breweries has increased in every state in the country. This trend is also reflected in the development of a vibrant community of people who rate, review, and share information about beers online. Websites like BeerAdvocate, RateBeer, and Untappd provide forums for beer drinkers to discuss their favorite beers with each other. Surprisingly, these sites differ from product marketplaces such as Amazon in that they do not recommend new products to users based on users’ previous evaluations.</p>
@@ -76,37 +76,37 @@ head(beer_data)</code></pre>
 <p>We can see that this Spark dataframe contains three columns. First, beer_full is a character vector with the beer name. To avoid confusing beers with the same name from different breweries, the brewery name precedes the beer name for every element in this vector. Next the user_score column gives the rating on a scale of 1 to 5. Finally, the user_id column shows the id of the user for a given beer rating. Each row represents a beer rating from a given user.</p>
 <p>The first thing I have to do is convert my data into a suitable form for creating a recommendation system. I’m going to use an approach called item-based collaborative filtering, which recommends new products based on similarities between these products and the products the user has rated in the past. Before compute similarities among beers, I first convert my data into a “user-by-beer” matrix. In this matrix, each row will contain all of the ratings from a given user. Because most users have not rated most beers, this will be a very sparse matrix. Given that we have about 100 thousand users and 24.5 thousand beers, the dimensions of this matrix will be about 100,000x24,500 (~ 2.5 billion cells!). Clearly, we will have trouble fitting this data into the workspace as a conventional matrix. Fortunately, the sparsity of the matrix means that we should have no trouble working with the data as a sparse matrix. The Matrix package has tools that will help with this.</p>
 <p>Sparse matrices can be thought of as being made up of three components: the row number (“i”) of a non-empty cell, the column number (“j”) of a non-empty cell, and the value (“x”) in that cell (i.e. the ratings). To create a vector of row numbers for the sparse matrix, I first find the number of ratings associated with each user. I then repeat the user_id the number of times that this user has posted a rating. For example, if user 1 has 3 ratings and user 2 has 4 ratings, the i vector would begin [1, 1, 1, 2, 2, 2, 2]. In other words, the row number for the first 3 entries of the sparse matrix is 1 and the row number of the next 4 entries is 2.</p>
-<pre class="r"><code># Find number of users in the data 
+<pre class="r"><code># Find number of users in the data
 num_users &lt;- beer_data %&gt;% group_by(user_id) %&gt;% summarise(count = n()) %&gt;%
              sdf_nrow
 
-i &lt;- beer_data %&gt;% 
+i &lt;- beer_data %&gt;%
      # Find number of ratings for each user and sort by user_id
-     group_by(user_id) %&gt;% summarise(count = n()) %&gt;% arrange(user_id) %&gt;% 
+     group_by(user_id) %&gt;% summarise(count = n()) %&gt;% arrange(user_id) %&gt;%
      # Convert from Spark dataframe to tibble and extract
      # count (number of ratings) vector
-     select(count) %&gt;% collect %&gt;% .[[&quot;count&quot;]] 
+     select(count) %&gt;% collect %&gt;% .[[&quot;count&quot;]]
 
 # Repeat user_id by the number of ratings associated with each user
 i &lt;- rep(1:num_users, i)</code></pre>
 <p>Producing a vector of columns associated with each user rating is a bit more tricky. First, I create a set of ids for each unique beer in the Spark dataframe. I merge these to the original dataframe, group the dataframe by user_ids, and use the collect_list function to produce a dataframe of beer ids nested in user ids. Finally, I arrange the data by user_id (this part is crucial to making sure the rows and columns match up) and use the explode function to unnest the lists of beer_ids associated with each user. What I’m left with as a vector of column numbers that represent beer ids of user ratings and that are sorted by user id. I’ve annotated the code below to make this as clear as possible. If you have any questions about how this works, please ask them in the comments section.</p>
-<pre class="r"><code># Creating Spark dataframe with ids for each beer 
+<pre class="r"><code># Creating Spark dataframe with ids for each beer
 beer_key &lt;- beer_data %&gt;% distinct(beer_full) %&gt;% sdf_with_sequential_id
 
-# Merging unique beer ids to the beer data with left_join 
+# Merging unique beer ids to the beer data with left_join
 j &lt;- left_join(beer_data, beer_key, by = &quot;beer_full&quot;) %&gt;%
      # Grouping by user_id, nesting beer_ids in user_ids, and sorting by user_id
      group_by(user_id) %&gt;% summarise(user_beers = collect_list(id)) %&gt;%
-     arrange(user_id) %&gt;% 
+     arrange(user_id) %&gt;%
      # Unnesting beer ids (with explode), bringing data into R,
-     # and extracting column vector 
+     # and extracting column vector
      select(user_beers) %&gt;% mutate(vec = explode(user_beers)) %&gt;% select(vec) %&gt;%
      collect %&gt;% .[[&quot;vec&quot;]]
 
 # Turning beer key (beers by unique id) from Spark dataframe to regular dataframe
 beer_key &lt;- beer_key %&gt;% collect</code></pre>
 <p>Last, I have to extract a vector of user ratings from the Spark dataframe. To do this I just sort the data by user_id, bring the data into R (with the collect function) and extract the user_score vector.</p>
-<pre class="r"><code># Sort data by user_id, bring data into R, and extract user_score vector 
+<pre class="r"><code># Sort data by user_id, bring data into R, and extract user_score vector
 x &lt;- beer_data %&gt;% arrange(user_id) %&gt;% select(user_score) %&gt;% collect %&gt;%
      .[[&quot;user_score&quot;]]</code></pre>
 <p>Finally, I use the sparseMatrix function from the Matrix package to create a sparse matrix.</p>
@@ -114,28 +114,28 @@ x &lt;- beer_data %&gt;% arrange(user_id) %&gt;% select(user_score) %&gt;% colle
 <p>Here’s how the sparse matrix is represented in R.</p>
 <pre class="r"><code>head(beer_sparse)</code></pre>
 <pre><code>## 6 x 24542 sparse Matrix of class &quot;dgCMatrix&quot;
-##                                                                        
-## [1,] .    .    .    . .   .    .    4.25 . .    .    .    .   .    .   
-## [2,] 4.97 3.90 1.00 . .   .    .    .    . .    .    3.82 .   .    .   
+##
+## [1,] .    .    .    . .   .    .    4.25 . .    .    .    .   .    .
+## [2,] 4.97 3.90 1.00 . .   .    .    .    . .    .    3.82 .   .    .
 ## [3,] 4.00 4.00 4.41 3 3.5 3.75 4.25 4.00 4 4.11 3.75 4.00 3.5 3.75 3.86
-## [4,] 4.00 4.00 .    . .   .    .    .    . .    .    .    .   .    .   
+## [4,] 4.00 4.00 .    . .   .    .    .    . .    .    .    .   .    .
 ## [5,] 4.00 2.08 .    . .   3.50 .    4.00 . .    4.45 3.10 .   .    2.52
-## [6,] .    .    .    . .   .    .    .    . .    .    3.50 .   .    .   
-##                                                                        
-## [1,] .    .   .    .    .   .   .    . . .   .   .   .    .    .   .   
-## [2,] .    .   .    .    .   .   4.50 . . .   .   3.5 .    .    .   .   
+## [6,] .    .    .    . .   .    .    .    . .    .    3.50 .   .    .
+##
+## [1,] .    .   .    .    .   .   .    . . .   .   .   .    .    .   .
+## [2,] .    .   .    .    .   .   4.50 . . .   .   3.5 .    .    .   .
 ## [3,] 4.25 3.9 3.75 4.25 3.8 4.5 3.94 4 4 4.0 3.5 4.0 4.25 4.25 3.5 3.75
-## [4,] .    .   .    .    .   .   .    . . .   .   .   .    .    .   .   
+## [4,] .    .   .    .    .   .   .    . . .   .   .   .    .    .   .
 ## [5,] .    .   .    4.50 .   4.0 .    . . 3.5 .   .   .    3.50 .   4.00
-## [6,] .    .   .    4.00 .   .   .    . . .   .   .   .    .    .   .   
-##            
+## [6,] .    .   .    4.00 .   .   .    . . .   .   .   .    .    .   .
+##
 ## [1,] ......
 ## [2,] ......
 ## [3,] ......
 ## [4,] ......
 ## [5,] ......
 ## [6,] ......
-## 
+##
 ##  .....suppressing columns in show(); maybe adjust &#39;options(max.print= *, width = *)&#39;
 ##  ..............................</code></pre>
 <p>This provides a snapshot of the first six users in the sparse matrix. The dots represent empty cells, the numbers ratings. While large for a sparse matrix, this object is only 63Mb, which is manageable for our purposes. Our next step is to calculate similarity score among beers. But before we can do this, we need to make some more modifications to the data.</p>
@@ -190,42 +190,42 @@ registerDoParallel(cl)
 # Setting up the foreach loop and pre-loading packages used within the loop
 item_similarity_matrix &lt;- foreach(i = 1:nrow(beer_key),
                              .packages = c(&quot;dplyr&quot;, &quot;Matrix&quot;, &quot;lsa&quot;)) %dopar% {
-  
+
   # Calculating the cosine distances between a given beer (i) and all the
   # beers in the sparse matrix
-  sims &lt;- cosine(t(beer_sparse_svd$v)[,i], t(beer_sparse_svd$v))   
-  
-  # Finding arrange the cosine distances in descending order, 
+  sims &lt;- cosine(t(beer_sparse_svd$v)[,i], t(beer_sparse_svd$v))
+
+  # Finding arrange the cosine distances in descending order,
   # finding the 501th biggest one
   cutoff &lt;- sims %&gt;% tibble %&gt;% arrange(desc(.)) %&gt;% .[501,] %&gt;% .[[&quot;.&quot;]]
-  
+
   # Limiting the beer_key dataframe to beers with large enough
   # similarity scores
   sims.test &lt;- beer_key %&gt;% .[which(sims &gt;= cutoff &amp; sims &lt; 1),]
-  
+
   # Appending similarity scores to the abridged dataframe and sorting by
   # similarity score
   sims.test &lt;- sims.test %&gt;% mutate(score = sims[sims &gt;= cutoff &amp; sims &lt; 1]) %&gt;%
     arrange(desc(score))
-  
+
   # Changing column names of the final tibble
-  names(sims.test) &lt;- c(beer_key[i,] %&gt;% .[[&quot;beer_full&quot;]], &quot;id&quot;, &quot;score&quot;) 
-  
+  names(sims.test) &lt;- c(beer_key[i,] %&gt;% .[[&quot;beer_full&quot;]], &quot;id&quot;, &quot;score&quot;)
+
   return(sims.test)
 }</code></pre>
 <p>On my computer, this code took about fifteen minutes to run. On a computer with fewer cores, this will take a lot longer. This code returns a list of ~24,500 tibbles, each with 500 rows. This is a large object, 1.4Gb. If this affects R’s performance we can always return to this bit of code and change 500 to a smaller number.</p>
 <p>Let’s have a look at a tibble from this list. I’ll search for one of my favorite beers, Ballast Point Sculpin, to find out which beers are most similar to the Sculpin.</p>
 <pre class="r"><code># Searching for Sculpin in the beer_key
 grep(&quot;Sculpin&quot;, beer_key$beer_full, value = TRUE)</code></pre>
-<pre><code>## [1] &quot;Ballast Point Brewing Company Sculpin - Habanero&quot;  
+<pre><code>## [1] &quot;Ballast Point Brewing Company Sculpin - Habanero&quot;
 ## [2] &quot;Ballast Point Brewing Company Sculpin - Unfiltered&quot;
 ## [3] &quot;Ballast Point Brewing Company Sculpin - Grapefruit&quot;
 ## [4] &quot;Ballast Point Brewing Company Sculpin - Spruce Tip&quot;
-## [5] &quot;Ballast Point Brewing Company Sculpin - Aloha&quot;     
-## [6] &quot;Ballast Point Brewing Company Sculpin&quot;             
+## [5] &quot;Ballast Point Brewing Company Sculpin - Aloha&quot;
+## [6] &quot;Ballast Point Brewing Company Sculpin&quot;
 ## [7] &quot;Ballast Point Brewing Company Sculpin - Pineapple&quot;</code></pre>
 <p>As you can see, many kinds of Sculpins appear in the dataset. I’ll index the list (called ‘item_similarity_matrix’) for the original Sculpin.</p>
-<pre class="r"><code># Beers similar to Sculpin 
+<pre class="r"><code># Beers similar to Sculpin
 item_similarity_matrix[grep(&quot;Sculpin&quot;, beer_key$beer_full)[6]]</code></pre>
 <pre><code>## [[1]]
 ## # A tibble: 500 x 3
@@ -283,19 +283,19 @@ example_user &lt;- beer_sparse[3,]</code></pre>
 <pre class="r"><code>candidate_beer_ids &lt;- candidate_beer_ids[!(candidate_beer_ids %in%
                                              rated_beer_ids)]
 
-# Number of candidate beers 
+# Number of candidate beers
 length(candidate_beer_ids)</code></pre>
 <pre><code>## [1] 19149</code></pre>
 <p>I am now ready to compute predicted ratings for the candidate beers (i.e. beers that have some degree of similarity to at least 5 beers that the user has rated). I start by calculating the denominators of these predicted ratings. For each candidate beer, is this the sum of similarity scores to beers the user has rated.</p>
 <pre class="r"><code>denoms &lt;- map(item_similarity_matrix[candidate_beer_ids], ~.x %&gt;%
                 filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]] %&gt;% sum)</code></pre>
 <p>The numerators of these predicted ratings are the products of similarity scores and ratings of beers the user has rated. I use the map function to create two lists - one of vectors of similarity scores for each candidate beer and one of vectors of ratings of similar beers to each candidate beer. Finally, I use purrr’s map2 function, which takes two lists as inputs, and take sums of the dot products of these lists of vectors. The resulting list contains the numerators of predicted ratings for each candidate beer.</p>
-<pre class="r"><code># List of similarity scores 
+<pre class="r"><code># List of similarity scores
 sims_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
                  ~.x %&gt;% filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]])
 
-# List of ratings 
-ratings_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids], 
+# List of ratings
+ratings_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
                      ~example_user[.x %&gt;% filter(id %in% rated_beer_ids) %&gt;%
                                      .[[&quot;id&quot;]]])
 
@@ -303,8 +303,8 @@ nums &lt;- map2(sims_vecs, ratings_vecs, ~sum(.x*.y))</code></pre>
 <p>The last step is to divide each element in the numerators list by its corresponding denominator from the denominators list to get predicted ratings. I once again use the map2 function for this.</p>
 <pre class="r"><code>predicted_ratings &lt;- map2(nums, denoms, ~.x/.y)</code></pre>
 <p>Now that I have a list of predicted ratings for candidate beers I can create a tibble that displays beer names and their predicted ratings. I sort this in descending order of predicted rating and sample the first few rows to see which beers my recommendation system would recommend this user.</p>
-<pre class="r"><code>pred_ratings_tbl &lt;- tibble(beer_full = beer_key %&gt;% 
-                          filter(id %in% candidate_beer_ids) %&gt;% .[[&quot;beer_full&quot;]], 
+<pre class="r"><code>pred_ratings_tbl &lt;- tibble(beer_full = beer_key %&gt;%
+                          filter(id %in% candidate_beer_ids) %&gt;% .[[&quot;beer_full&quot;]],
                           pred_rating = predicted_ratings %&gt;% unlist) %&gt;%
                           arrange(desc(pred_rating))
 head(pred_ratings_tbl)</code></pre>
@@ -318,7 +318,7 @@ head(pred_ratings_tbl)</code></pre>
 ## 5 Highland Brewing Daycation                    4.25
 ## 6 SingleCut Beersmiths KT66 IPL                 4.24</code></pre>
 <p>The top-six recommended beers for this user include 2 American Imperial IPAs, 2 American IPAs, a Belgian pale ale, and an IPL (India Pale Lager). Apparently the user has a preference for IPAs. These beers are geographically distributed, although many of them are in New England. I could check if the user is from New England; this information is in the full data. Now let’s check the face validity of these recommendations. I’m going to pull a list of some of the top beers that this user has rated.</p>
-<pre class="r"><code>tibble(beer_full = beer_key[which(example_user != 0),] %&gt;% .[[&quot;beer_full&quot;]], 
+<pre class="r"><code>tibble(beer_full = beer_key[which(example_user != 0),] %&gt;% .[[&quot;beer_full&quot;]],
        rating = example_user[which(example_user != 0)]) %&gt;%
        arrange(desc(rating)) %&gt;% head</code></pre>
 <pre><code>## # A tibble: 6 x 2
@@ -333,15 +333,15 @@ head(pred_ratings_tbl)</code></pre>
 <p>These ratings make sense given the user’s recommended beers. Many of these beers are American IPAs, and some of them are American Imperial IPAs. They also come from a geographically-distributed set of breweries. We don’t see any sign of clustering in New England from this short list; that the recommended beers are disproportionately from New England could be a sign that the highest rated IPA are from New England, or it could be a coincidence. Of course we could test this by looking at a longer list of this user’s favorite beers.</p>
 <p>Instead, I encourage you to try this recommendation system on your own set of beer ratings. The function below contains the code for computing predicted beer ratings. Enter a vector of beer ratings and the function will return six recommendations. To create a vector of beer ratings, first create a 24542-length vector of 0’s. Then, search beer_key to find the position of the beer you want to rate. I did this with Sculpin above. Enter your rating in the vector of 0’s at the appropriate position. When you’ve created your vector of beer ratings, enter it into the function. One last thing - while the recommendation system discussed above only recommended beers with at least 5 similar beers to beers that the user rated, this function has a default of 3 similarity beers. This is the second argument of the function, similarity_cutoff. To change this default, simply enter a number other than 3 as the default.</p>
 <pre class="r"><code>recommend_beers &lt;- function(input_vec, similarity_cutoff = 3){
-  
+
 # Replace missing values with 0
-input_vec[is.na(input_vec)] &lt;- 0 
-  
+input_vec[is.na(input_vec)] &lt;- 0
+
 if(length(input_vec) != nrow(beer_key)){
   stop(&quot;Please enter a 24502-length vector!&quot;)}else if(
   length(input_vec[input_vec &gt; 5 | input_vec &lt; 0]) &gt; 0){
     stop(&quot;Vector can only contain values between 0 and 5!&quot;)}
-  
+
 ## ------------------------------------------------------------------------
 rated_beer_ids &lt;- which(input_vec != 0)
 
@@ -351,7 +351,7 @@ sim_scores &lt;- map(item_similarity_matrix, ~.x %&gt;%
                     .[[&quot;score&quot;]])
 
 ## ------------------------------------------------------------------------
-candidate_beer_ids &lt;- which(sim_scores %&gt;% 
+candidate_beer_ids &lt;- which(sim_scores %&gt;%
                               map(., ~length(.x) &gt;= similarity_cutoff) %&gt;%
                               unlist)
 
@@ -366,12 +366,12 @@ denoms &lt;- map(item_similarity_matrix[candidate_beer_ids], ~.x %&gt;%
                 filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]] %&gt;% sum)
 
 ## ------------------------------------------------------------------------
-# List of similarity scores 
+# List of similarity scores
 sims_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
                  ~.x %&gt;% filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]])
 
-# List of ratings 
-ratings_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids], 
+# List of ratings
+ratings_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
                     ~input_vec[.x %&gt;% filter(id %in% rated_beer_ids) %&gt;%
                                     .[[&quot;id&quot;]]])
 
@@ -381,9 +381,9 @@ nums &lt;- map2(sims_vecs, ratings_vecs, ~sum(.x*.y))
 predicted_ratings &lt;- map2(nums, denoms, ~.x/.y)
 
 ## ------------------------------------------------------------------------
-pred_ratings_tbl &lt;- tibble(beer_full = beer_key %&gt;% 
+pred_ratings_tbl &lt;- tibble(beer_full = beer_key %&gt;%
                              filter(id %in% candidate_beer_ids) %&gt;%
-                             .[[&quot;beer_full&quot;]], 
+                             .[[&quot;beer_full&quot;]],
                            pred_rating = predicted_ratings %&gt;% unlist) %&gt;%
                            arrange(desc(pred_rating))
 
