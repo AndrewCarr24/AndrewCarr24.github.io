@@ -8,27 +8,27 @@
 				Mapping the Underlying Social Structure of Reddit &middot; Data Science Diarist
 		</title>
 
-		
+
   		<link rel="stylesheet" href="/css/style.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
-		
+
 		<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
 		<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
 		<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 
-		
+
 		<link href="" rel="alternate" type="application/rss+xml" title="Data Science Diarist" />
 	</head>
 
     <body>
         <nav class="nav">
   <div class="nav-container">
-    <a href="/tale/">
+    <a href="/">
       <h2 class="nav-title">Data Diarist</h2>
     </a>
     <ul>
       <li><a href="/tale/about">About</a></li>
-      <li><a href="/tale/">Posts</a></li>
+      <li><a href="https://github.com/datadiarist">Github</a></li>
     </ul>
   </div>
 </nav>
@@ -38,7 +38,7 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js">
 </script> <script>hljs.initHighlightingOnLoad();</script>
 
-        
+
 
 <main>
 	<div class="post">
@@ -51,9 +51,9 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 		<h1 class="post-title">Mapping the Underlying Social Structure of Reddit</h1>
 <div class="post-line"></div>
 
-		
 
-		
+
+
 
 
 <p>Since it was founded in 2005, Reddit has developed into a popular place for sharing opinions and ideas, rating web content, and aggregating news on the internet. Reddit is organized into thousands of user-made communities, called subreddits, which cover a broad range of subjects, including politics, sports, technology, personal hobbies, and self-improvement, to name a few. Given that Reddit is structured in this way, it is natural to think of Reddit as a population of users organized into many overlapping communities (subreddits). In other words, it makes sense to conceptualize Reddit as having an underlying social structure. Uncovering this structure may provide insights into the social organization of internet culture more generally.</p>
@@ -64,23 +64,23 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 <p>Here’s the link to Baumgarter’s Reddit submissions data - <a href="http://files.pushshift.io/reddit/submissions/" class="uri">http://files.pushshift.io/reddit/submissions/</a>. Each of these files has all Reddit submissions for a given month between June 2005 and May 2019. Files are JSON objects stored in various compression formats that range between .017Mb and 5.77Gb in size, a testament to how much Reddit has grown over the years. Let’s get our feet wet with this data by downloading something in the middle of this range - a 710Mb file for all Reddit submissions in May 2013. The file is called RS_2013-05.bz2. It will take a minute or to download. You can double-click this file to unzip it, or if you prefer to work in the Terminal use the following command: <code>bzip2 -d RS_2013-05.bz2</code>. This will take a couple of minutes to unzip. Make sure you have enough room to store the unzipped file on your computer - it’s 4.51Gb.<br />
 Once we have unzipped this file, load the readr, jsonlite, and dplyr packages. Use the read_lines function from readr and set the n_max parameter to 1 to read the first line from the file. Pipe this through fromJSON and names to get a list of the variable names contained in the data.</p>
 <pre class="r"><code>read_lines(&quot;RS_2013-05&quot;, n_max = 1) %&gt;% fromJSON() %&gt;% names</code></pre>
-<pre><code>##  [1] &quot;edited&quot;                 &quot;title&quot;                 
-##  [3] &quot;thumbnail&quot;              &quot;retrieved_on&quot;          
-##  [5] &quot;mod_reports&quot;            &quot;selftext_html&quot;         
-##  [7] &quot;link_flair_css_class&quot;   &quot;downs&quot;                 
-##  [9] &quot;over_18&quot;                &quot;secure_media&quot;          
+<pre><code>##  [1] &quot;edited&quot;                 &quot;title&quot;
+##  [3] &quot;thumbnail&quot;              &quot;retrieved_on&quot;
+##  [5] &quot;mod_reports&quot;            &quot;selftext_html&quot;
+##  [7] &quot;link_flair_css_class&quot;   &quot;downs&quot;
+##  [9] &quot;over_18&quot;                &quot;secure_media&quot;
 ## [11] &quot;url&quot;                    &quot;author_flair_css_class&quot;
-## [13] &quot;media&quot;                  &quot;subreddit&quot;             
-## [15] &quot;author&quot;                 &quot;user_reports&quot;          
-## [17] &quot;domain&quot;                 &quot;created_utc&quot;           
-## [19] &quot;stickied&quot;               &quot;secure_media_embed&quot;    
-## [21] &quot;media_embed&quot;            &quot;ups&quot;                   
-## [23] &quot;distinguished&quot;          &quot;selftext&quot;              
-## [25] &quot;num_comments&quot;           &quot;banned_by&quot;             
-## [27] &quot;score&quot;                  &quot;report_reasons&quot;        
-## [29] &quot;id&quot;                     &quot;gilded&quot;                
-## [31] &quot;is_self&quot;                &quot;subreddit_id&quot;          
-## [33] &quot;link_flair_text&quot;        &quot;permalink&quot;             
+## [13] &quot;media&quot;                  &quot;subreddit&quot;
+## [15] &quot;author&quot;                 &quot;user_reports&quot;
+## [17] &quot;domain&quot;                 &quot;created_utc&quot;
+## [19] &quot;stickied&quot;               &quot;secure_media_embed&quot;
+## [21] &quot;media_embed&quot;            &quot;ups&quot;
+## [23] &quot;distinguished&quot;          &quot;selftext&quot;
+## [25] &quot;num_comments&quot;           &quot;banned_by&quot;
+## [27] &quot;score&quot;                  &quot;report_reasons&quot;
+## [29] &quot;id&quot;                     &quot;gilded&quot;
+## [31] &quot;is_self&quot;                &quot;subreddit_id&quot;
+## [33] &quot;link_flair_text&quot;        &quot;permalink&quot;
 ## [35] &quot;author_flair_text&quot;</code></pre>
 <p>The data contain 35 bits of information for each submission. For this project, I’m only interested in three things: the user name associated with the submission (author), the subreddit to which a submission has been posted (subreddit), and the time of submission (created_utc). Everything else is extraneous information.</p>
 <p>If we could figure out a way to extract these three pieces of information from each line of JSON we could greatly reduce the size of our data, which would allow us to store multiple months worth of information on our local machine. Jq is a command-line JSON processor that makes this possible.</p>
