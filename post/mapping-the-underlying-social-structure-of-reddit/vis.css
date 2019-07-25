@@ -1463,7 +1463,7 @@ div.vis-network div.vis-navigation div.vis-button.vis-zoomExtends {
   box-sizing: border-box;
 }
 
-.iframe {
+iframe {
   margin: auto;
   width: 60%;
   border: 3px solid #73AD21;
