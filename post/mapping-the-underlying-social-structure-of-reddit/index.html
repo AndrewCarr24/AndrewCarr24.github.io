@@ -54,10 +54,10 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 
 
 
-<script src="/post/mapping-the-underlying-social-structure-of-reddit/htmlwidgets.js"></script>
+<script src="htmlwidgets.js"></script>
 <link href="vis.css" rel="stylesheet" />
-<script src="/post/mapping-the-underlying-social-structure-of-reddit/vis.min.js"></script>
-<script src="/post/mapping-the-underlying-social-structure-of-reddit/visNetwork.js"></script>
+<script src="vis.min.js"></script>
+<script src="visNetwork.js"></script>
 
 
 <p>Since it was founded in 2005, Reddit has developed into a popular place for sharing opinions and ideas, rating web content, and aggregating news on the internet. Reddit is organized into thousands of user-made communities, called subreddits, which cover a broad range of subjects, including politics, sports, technology, personal hobbies, and self-improvement, to name a few. Given that Reddit is structured in this way, it is natural to think of Reddit as a population of users organized into many overlapping communities (subreddits). In other words, it makes sense to conceptualize Reddit as having an underlying social structure. Uncovering this structure may provide insights into the social organization of internet culture more generally.</p>
@@ -622,8 +622,7 @@ community_nodes_fin &lt;- inner_join(community_nodes_fin, comm_imp_key, by = &qu
 <pre class="r"><code>visNetwork(community_nodes_fin %&gt;% rename(id = comm), community_edgelist_mod) %&gt;%
   visIgraphLayout(layout = &quot;layout_with_fr&quot;) %&gt;%
   visEdges(width = 3.5) %&gt;% visOptions(., highlightNearest = TRUE)</code></pre>
-<iframe src="net_2013.html" width="1000" height="500"></iframe>
-
+<div id="htmlwidget-1" style="width: 672px; height: 480px; background: rgba(0, 0, 0, 0);" class="visNetwork html-widget html-widget-static-bound"><div id="titlehtmlwidget-1" style="font-family: Georgia, &quot;Times New Roman&quot;, Times, serif; font-weight: bold; font-size: 20px; text-align: center; display: none;"></div><div id="subtitlehtmlwidget-1" style="font-family: Georgia, &quot;Times New Roman&quot;, Times, serif; font-size: 12px; text-align: center; display: none;"></div><select class="dropdown" id="nodeSelecthtmlwidget-1" style="display: none;"></select><hr style="height:0px; visibility:hidden; margin-bottom:-1px;"><select class="dropdown" id="selectedByhtmlwidget-1" style="display: none;"></select><div id="maindivhtmlwidget-1" style="height:95%;background-color: inherit;"><div id="graphhtmlwidget-1" style="float:right; width:100%;height:100%;background-color: inherit;"><div class="vis-network" tabindex="900" style="position: relative; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;"><canvas width="1344" height="912" style="position: relative; touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;"></canvas><div class="vis-tooltip" style="left: 475px; top: 401px; visibility: hidden;">funny AskReddit AdviceAnimals pics</div></div><div style="position: fixed; visibility: hidden; padding: 5px; font-family: verdana; font-size: 14px; background-color: rgb(245, 244, 237); border-radius: 3px; border: 1px solid rgb(128, 128, 116); box-shadow: rgba(0, 0, 0, 0.2) 3px 3px 10px; max-width: 400px; word-break: break-all; top: 641px; left: 1044px;">funny AskReddit AdviceAnimals pics</div><div id="footerhtmlwidget-1" style="font-family: Georgia, &quot;Times New Roman&quot;, Times, serif; font-size: 12px; text-align: center; background-color: inherit; display: none;"></div></div></div></div>
 		<script src="//yihui.name/js/math-code.js"></script>
 <script async
 src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
