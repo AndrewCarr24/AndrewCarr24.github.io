@@ -622,7 +622,7 @@ community_nodes_fin &lt;- inner_join(community_nodes_fin, comm_imp_key, by = &qu
 <pre class="r"><code>visNetwork(community_nodes_fin %&gt;% rename(id = comm), community_edgelist_mod) %&gt;%
   visIgraphLayout(layout = &quot;layout_with_fr&quot;) %&gt;%
   visEdges(width = 3.5) %&gt;% visOptions(., highlightNearest = TRUE)</code></pre>
-<iframe src="net_2013.html" width = "800" height = "550" scrolling = "no"></iframe>
+<iframe src="net_2013.html" width = "800" height = "550" scrolling = "no" frameborder = "0"></iframe>
 <script src="//yihui.name/js/math-code.js"></script>
 <script async
 src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
