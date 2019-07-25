@@ -2,7 +2,7 @@
     cursor: pointer;
 }
 
-/*.rPartvisNetworkTooltipShowme{ 
+/*.rPartvisNetworkTooltipShowme{
 display: none;
 }
 .rPartvisNetworkTooltipShowhim:hover .rPartvisNetworkTooltipShowme{
@@ -10,7 +10,7 @@ display : block;
 }*/
 
 .rPartvisNetwork{
-  margin: 0.5em auto; 
+  margin: 0.5em auto;
 }
 
 .vis .overlay {
@@ -1236,7 +1236,7 @@ div.vis-network div.vis-navigation div.vis-button.vis-zoomExtends {
   height: 100%;
   overflow-x: hidden;
   overflow-y: scroll;
-} 
+}
 
 .vis-left.vis-panel.vis-vertical-scroll {
   direction: rtl;
@@ -1461,4 +1461,12 @@ div.vis-network div.vis-navigation div.vis-button.vis-zoomExtends {
   margin: 0;
 
   box-sizing: border-box;
+}
+
+.iframe {
+  margin: auto;
+  width: 60%;
+  border: 3px solid #73AD21;
+  padding: 10px;
+  display: block;
 }
