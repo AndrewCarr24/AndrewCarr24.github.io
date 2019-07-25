@@ -8,15 +8,15 @@
 				Mapping the Underlying Social Structure of Reddit &middot; Data Science Diarist
 		</title>
 
-		
+
   		<link rel="stylesheet" href="/css/style.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
-		
+
 		<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
 		<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
 		<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 
-		
+
 		<link href="" rel="alternate" type="application/rss+xml" title="Data Science Diarist" />
 	</head>
 
@@ -38,7 +38,7 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js">
 </script> <script>hljs.initHighlightingOnLoad();</script>
 
-        
+
 
 <main>
 	<div class="post">
@@ -51,9 +51,9 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 		<h1 class="post-title">Mapping the Underlying Social Structure of Reddit</h1>
 <div class="post-line"></div>
 
-		
 
-		
+
+
 <script src="/rmarkdown-libs/htmlwidgets/htmlwidgets.js"></script>
 <link href="/rmarkdown-libs/vis/vis.css" rel="stylesheet" />
 <script src="/rmarkdown-libs/vis/vis.min.js"></script>
@@ -68,23 +68,23 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 <p>Here’s the link to Baumgarter’s Reddit submissions data - <a href="http://files.pushshift.io/reddit/submissions/">files.pushshift.io/reddit/submissions/</a>. Each of these files has all Reddit submissions for a given month between June 2005 and May 2019. Files are JSON objects stored in various compression formats that range between .017Mb and 5.77Gb in size, a testament to how much Reddit has grown over the years. Let’s get our feet wet with this data by downloading something in the middle of this range - a 710Mb file for all Reddit submissions in May 2013. The file is called RS_2013-05.bz2. It will take a minute or to download. You can double-click this file to unzip it, or if you prefer to work in the Terminal use the following command: <code>bzip2 -d RS_2013-05.bz2</code>. This will take a couple of minutes to unzip. Make sure you have enough room to store the unzipped file on your computer - it’s 4.51Gb.<br />
 Once we have unzipped this file, load the readr, jsonlite, and dplyr packages. Use the read_lines function from readr and set the n_max parameter to 1 to read the first line from the file. Pipe this through fromJSON and names to get a list of the variable names contained in the data.</p>
 <pre class="r"><code>read_lines(&quot;RS_2013-05&quot;, n_max = 1) %&gt;% fromJSON() %&gt;% names</code></pre>
-<pre><code>##  [1] &quot;edited&quot;                 &quot;title&quot;                 
-##  [3] &quot;thumbnail&quot;              &quot;retrieved_on&quot;          
-##  [5] &quot;mod_reports&quot;            &quot;selftext_html&quot;         
-##  [7] &quot;link_flair_css_class&quot;   &quot;downs&quot;                 
-##  [9] &quot;over_18&quot;                &quot;secure_media&quot;          
+<pre><code>##  [1] &quot;edited&quot;                 &quot;title&quot;
+##  [3] &quot;thumbnail&quot;              &quot;retrieved_on&quot;
+##  [5] &quot;mod_reports&quot;            &quot;selftext_html&quot;
+##  [7] &quot;link_flair_css_class&quot;   &quot;downs&quot;
+##  [9] &quot;over_18&quot;                &quot;secure_media&quot;
 ## [11] &quot;url&quot;                    &quot;author_flair_css_class&quot;
-## [13] &quot;media&quot;                  &quot;subreddit&quot;             
-## [15] &quot;author&quot;                 &quot;user_reports&quot;          
-## [17] &quot;domain&quot;                 &quot;created_utc&quot;           
-## [19] &quot;stickied&quot;               &quot;secure_media_embed&quot;    
-## [21] &quot;media_embed&quot;            &quot;ups&quot;                   
-## [23] &quot;distinguished&quot;          &quot;selftext&quot;              
-## [25] &quot;num_comments&quot;           &quot;banned_by&quot;             
-## [27] &quot;score&quot;                  &quot;report_reasons&quot;        
-## [29] &quot;id&quot;                     &quot;gilded&quot;                
-## [31] &quot;is_self&quot;                &quot;subreddit_id&quot;          
-## [33] &quot;link_flair_text&quot;        &quot;permalink&quot;             
+## [13] &quot;media&quot;                  &quot;subreddit&quot;
+## [15] &quot;author&quot;                 &quot;user_reports&quot;
+## [17] &quot;domain&quot;                 &quot;created_utc&quot;
+## [19] &quot;stickied&quot;               &quot;secure_media_embed&quot;
+## [21] &quot;media_embed&quot;            &quot;ups&quot;
+## [23] &quot;distinguished&quot;          &quot;selftext&quot;
+## [25] &quot;num_comments&quot;           &quot;banned_by&quot;
+## [27] &quot;score&quot;                  &quot;report_reasons&quot;
+## [29] &quot;id&quot;                     &quot;gilded&quot;
+## [31] &quot;is_self&quot;                &quot;subreddit_id&quot;
+## [33] &quot;link_flair_text&quot;        &quot;permalink&quot;
 ## [35] &quot;author_flair_text&quot;</code></pre>
 <p>The data contain 35 bits of information for each submission. For this project, I’m only interested in three things: the user name associated with the submission (author), the subreddit to which a submission has been posted (subreddit), and the time of submission (created_utc). Everything else is extraneous information.</p>
 <p>If we could figure out a way to extract these three pieces of information from each line of JSON we could greatly reduce the size of our data, which would allow us to store multiple months worth of information on our local machine. Jq is a command-line JSON processor that makes this possible.</p>
@@ -99,37 +99,37 @@ Once we have unzipped this file, load the readr, jsonlite, and dplyr packages. U
 <p>One problem that may arise from this kind of data manipulation is that there are likely many more rows in the network form of this data than there are in the original form of the data. To see this, consider a user who has submitted posts to 10 distinct subreddits. These submissions would take up ten rows of our data in its current form. How many rows would we need to represent this in the network form of the data? To answer this question, we need to figure out how many pairs of subreddits are connected through this user. This is the same as finding how many distinct pairs of subreddits can be taken from the 10 subreddits to which the user has submitted. In combinatorics terms, this equals 10 choose 2, or <span class="math inline">\(\frac{10!}{(10-2)!2!} = 45\)</span> &lt;– fix this. This number gets exponentially larger as the number of submissions from the same user increases. In sum, although our data is only ~118Mb, this data will get a lot bigger once we convert it into a network format.</p>
 <p>For this reason, I chose to import this data as a Spark dataframe. Spark is a distributed computing platform that partitions large datasets and allows you operate on these partitions in parallel. Although Spark is often deploy on the cloud, in this post we will work with Spark locally in R. I will be using a lot of functions from the sparklyr package, which has a dplyr backend to Spark. If you’re new to Spark and sparklyr, check out RStudio’s guide for getting started with Spark in R (<a href="https://spark.rstudio.com/">spark.rstudio.com/</a>).</p>
 <p>Once you have Spark configured, import the data as a Spark dataframe.</p>
-<pre class="r"><code>reddit_data &lt;- spark_read_csv(sc, &quot;parsed_json_to_csv_2013_05&quot;, 
+<pre class="r"><code>reddit_data &lt;- spark_read_csv(sc, &quot;parsed_json_to_csv_2013_05&quot;,
                               header = FALSE)</code></pre>
 <p>Let’s see what this data looks like.</p>
 <pre class="r"><code>head(reddit_data)</code></pre>
 <pre><code>## # Source: spark&lt;?&gt; [?? x 3]
-##   V1                V2 V3             
-##   &lt;chr&gt;          &lt;int&gt; &lt;chr&gt;          
-## 1 shallah   1367452799 Documentaries  
+##   V1                V2 V3
+##   &lt;chr&gt;          &lt;int&gt; &lt;chr&gt;
+## 1 shallah   1367452799 Documentaries
 ## 2 chowsers  1367452798 leagueoflegends
-## 3 [deleted] 1367452796 nosleep        
-## 4 [deleted] 1367452796 woahdude       
-## 5 [deleted] 1367452796 starcraft      
+## 3 [deleted] 1367452796 nosleep
+## 4 [deleted] 1367452796 woahdude
+## 5 [deleted] 1367452796 starcraft
 ## 6 [deleted] 1367452796 aww</code></pre>
 <p>Looks like we have lots of missing user names from deleted accounts. These rows will need to be deleted, and this could bias the results if missing accounts are unevenly distributed across subreddits (which they probably are). Let’s bracket this problem for now. Otherwise, this looks fine. Next, I make a few changes to the data. First, I change the column names. Next, I convert the time variable from utc time to the day of the year, which is easier to interpret. I also change the variable name to “day”. Finally, I remove submissions from users who have deleted their accounts from the data.</p>
-<pre class="r"><code>reddit_data &lt;- reddit_data %&gt;% 
-    rename(author = V1, created_utc = V2, subreddit = V3) %&gt;% 
-    mutate(dateRestored = timestamp(created_utc + 18000)) %&gt;% 
-    mutate(day = dayofyear(dateRestored)) %&gt;% 
+<pre class="r"><code>reddit_data &lt;- reddit_data %&gt;%
+    rename(author = V1, created_utc = V2, subreddit = V3) %&gt;%
+    mutate(dateRestored = timestamp(created_utc + 18000)) %&gt;%
+    mutate(day = dayofyear(dateRestored)) %&gt;%
     filter(author != &quot;[deleted]&quot;)</code></pre>
 <pre class="r"><code>reddit_data %&gt;% sdf_nrow</code></pre>
 <pre><code>## [1] 2377314</code></pre>
 <p>After filtering out posts from deleted accounts, the number of Reddit submissions for March 2013 is 2,377,314. The next thing we need to do is filter Reddit submissions from users who only posted once. Based on how we’ve operationalized network ties, these users add nothing to our data. We also want to remove users who have posted too many times. Some Reddit accounts are bots that automatically posts to hundred of subreddits. Not only does including these accounts distort our understanding of how communities are organized on Reddit, but they cause our data to be exponentially larger for the reasons I explained above. Unfortunately, there’s no way to determine whether a user is a bot just based on the frequency with which they post. My arbitrary cutoff is 60. This cutoff is aggressive. In other words, it errs on the side of filtering humans who post a lot by human standards rather than erring on the side of keeping bots who post a little by bot standards.</p>
 <pre class="r"><code>reddit_data &lt;- reddit_data %&gt;% group_by(author) %&gt;% mutate(count = count()) %&gt;%
-    filter(count &lt; 60 &amp; count &gt; 1) %&gt;% 
-    ungroup() 
+    filter(count &lt; 60 &amp; count &gt; 1) %&gt;%
+    ungroup()
 reddit_data %&gt;% sdf_nrow</code></pre>
 <pre><code>## [1] 1640677</code></pre>
 <p>We’re down to 1,640,677 submissions, and we’re almost ready to convert our data to a network format. One last thing we need to is add a numeric id to each subreddit. This will prove useful for reasons I will explain later. To do this, I create a subreddit_key dataframe and merge this to the full dataframe. This will add an “id” column to the dataframe with a numeric id for each subreddit. I also pull the variables I want to use from the resulting data. These are “author”, “day”, “count”, “subreddit”, and “id.”</p>
 <pre class="r"><code>subreddit_key &lt;- reddit_data %&gt;% distinct(subreddit) %&gt;% sdf_with_sequential_id()
 
-reddit_data &lt;- left_join(reddit_data, subreddit_key, by = &quot;subreddit&quot;) %&gt;% 
+reddit_data &lt;- left_join(reddit_data, subreddit_key, by = &quot;subreddit&quot;) %&gt;%
   select(author, day, count, subreddit, id)</code></pre>
 <p>Let’s have a look at the data.</p>
 <pre class="r"><code>head(reddit_data)</code></pre>
@@ -156,10 +156,10 @@ example_user</code></pre>
 ## 6 --will--   122     7 cars      15260
 ## 7 --will--   129     7 funny     28096</code></pre>
 <p>If we take an inner_join and filter results from this user we will get 7^2 = 49 rows of data.</p>
-<pre class="r"><code>example_user_network &lt;- inner_join(example_user, example_user %&gt;% 
-                                   rename(day2 = day, count2 = count, 
+<pre class="r"><code>example_user_network &lt;- inner_join(example_user, example_user %&gt;%
+                                   rename(day2 = day, count2 = count,
                                           subreddit2 = subreddit, id2 = id),
-                                   by = &quot;author&quot;) 
+                                   by = &quot;author&quot;)
 example_user_network</code></pre>
 <pre><code>## # Source: spark&lt;?&gt; [?? x 9]
 ##    author     day count subreddit    id  day2 count2 subreddit2   id2
@@ -181,8 +181,8 @@ example_user_network</code></pre>
 <p>First, I filter rows in which subreddit pairs (labelled subreddit and subreddit2) are the same subreddit. We don’t want nodes in our network to be connected with themselves.</p>
 <pre class="r"><code>example_user_network &lt;- example_user_network %&gt;% filter(subreddit != subreddit2)</code></pre>
 <p>I also want to filter non-unique pairs of subreddits. Because –will– posted to pics three times, the inner_join will produce sets of rows for each of these submissions. We don’t want multiple submissions to the same subreddit to influence our results, so we remove these.</p>
-<pre class="r"><code>example_user_network &lt;- example_user_network %&gt;% 
-                        group_by(author, subreddit, subreddit2) %&gt;% 
+<pre class="r"><code>example_user_network &lt;- example_user_network %&gt;%
+                        group_by(author, subreddit, subreddit2) %&gt;%
                         filter(row_number(author) == 1)</code></pre>
 <p>Let’s see the data for this user now looks.</p>
 <pre class="r"><code>example_user_network</code></pre>
@@ -211,7 +211,7 @@ example_user_network</code></pre>
 </div>
 <p>Let’s define a function in R that takes a dataframe and two id variables, runs the id variables through Cantor’s pairing function and appends this to the dataframe, filters duplicate cantor ids from the dataframe, and returns the result. We’ll call this the cantor_filter.</p>
 <pre class="r"><code>cantor_filter &lt;- function(df, id, id2){
-  df %&gt;% mutate(id_pair = .5*(id + id2)*(id + id2 + 1) + pmax(id, id2)) %&gt;% group_by(author, id_pair) %&gt;% 
+  df %&gt;% mutate(id_pair = .5*(id + id2)*(id + id2 + 1) + pmax(id, id2)) %&gt;% group_by(author, id_pair) %&gt;%
     filter(row_number(id_pair) == 1) %&gt;% return()
 }</code></pre>
 <p>Our hope is that when we pipe our Spark dataframe through cantor_filter we’ll get a dataframe with 10 rows.</p>
@@ -231,14 +231,14 @@ example_user_network</code></pre>
 ##  9 --wil…   122     7 videos     5042   129      7 funny      28096  5.49e8
 ## 10 --wil…   129     7 funny     28096   125      7 pics        5043  5.49e8</code></pre>
 <p>Great, it worked. Pay attention to the subreddit and subreddit2 columns and notice that they only contain unique pairs of subreddits. These are connections between subreddits for which this user is responsible. Next, I apply the steps detailed above to the entire dataframe, not just to –will–’s submissions.</p>
-<pre class="r"><code>reddit_network_data &lt;- inner_join(reddit_data, reddit_data %&gt;% 
-                        rename(day2 = day, count2 = count, 
+<pre class="r"><code>reddit_network_data &lt;- inner_join(reddit_data, reddit_data %&gt;%
+                        rename(day2 = day, count2 = count,
                         subreddit2 = subreddit, id2 = id),
-                        by = &quot;author&quot;) %&gt;% 
-           filter(subreddit != subreddit2) %&gt;% 
-           group_by(author, subreddit, subreddit2) %&gt;% 
-           filter(row_number(author) == 1) %&gt;%  
-           cantor_filter() %&gt;%  
+                        by = &quot;author&quot;) %&gt;%
+           filter(subreddit != subreddit2) %&gt;%
+           group_by(author, subreddit, subreddit2) %&gt;%
+           filter(row_number(author) == 1) %&gt;%
+           cantor_filter() %&gt;%
            select(author, subreddit, subreddit2, id, id2, day, day2, id_pair) %&gt;%
            ungroup %&gt;% arrange(author)</code></pre>
 <p>Let’s take a look at the new data and see how many rows it has.</p>
@@ -263,14 +263,14 @@ example_user_network</code></pre>
 <p>Surprisingly, the network data is only 45,000 more rows than the original dataset. This is likely due to the fact that we filtered users who posted more than 60 times, so the unique combinations of subreddits to which users have posted is not that much larger than the number of unique submissions per user. This result is also a sign that many users post repeatly to the same subreddit rather than posted to multiple subreddits.</p>
 <p>I should note that this does not obviate the need to work within Spark. Before filtering duplicates, our dataframe was over 16 million rows. Thus, these data manipulations run a lot faster when we manipulate the data as a Spark dataframe rather than as a regular dataframe.</p>
 <pre class="r"><code># Number of rows in the data before filtering duplicate rows
-inner_join(reddit_data, reddit_data %&gt;% 
-                        rename(day2 = day, count2 = count, 
+inner_join(reddit_data, reddit_data %&gt;%
+                        rename(day2 = day, count2 = count,
                         subreddit2 = subreddit, id2 = id),
                         by = &quot;author&quot;) %&gt;% sdf_nrow</code></pre>
 <pre><code>## [1] 16286137</code></pre>
 <p>We now have a ~1.6 row Spark dataframe where each row represents a link between two subreddits through a distinct user. Many pairs of subreddits are connected by multiple users. We can think of subreddit pairs connected through more users as being more connected than subreddit pairs connected by fewer users. With this rationale, I create a “weight” variable that tallies the number of users connecting each subreddit pair and then filter the dataframe to unique pairs.</p>
-<pre class="r"><code>reddit_network_data &lt;- reddit_network_data %&gt;% group_by(id_pair) %&gt;% 
-  mutate(weight = n()) %&gt;% filter(row_number(id_pair) == 1) %&gt;% 
+<pre class="r"><code>reddit_network_data &lt;- reddit_network_data %&gt;% group_by(id_pair) %&gt;%
+  mutate(weight = n()) %&gt;% filter(row_number(id_pair) == 1) %&gt;%
   ungroup</code></pre>
 <p>Let’s have a look at the data and see how many rows it has.</p>
 <pre class="r"><code>reddit_network_data</code></pre>
@@ -299,35 +299,35 @@ inner_join(reddit_data, reddit_data %&gt;%
 <p>Our R dataframe consists of three columns: two id columns that provide information on connections between nodes and a weight column that tells us the strength of each connection. One nice thing to have would be some kind of metric for the relative importance of each subreddit. A simple way to get that would be to count how many times each subreddit appears in the data. I compute this for each subreddit by adding the weight value in the rows where that subreddit appears (see code annotation for deeper explanation of this). I create a dataframe called subreddit_imp_key that lists subreddit ids by subreddit importance.</p>
 <pre class="r"><code>subreddit_imp_key &lt;- full_join(reddit_edgelist %&gt;% group_by(id) %&gt;%
                                  summarise(count = sum(weight)),
-            reddit_edgelist %&gt;% group_by(id2) %&gt;% 
-              summarise(count2 = sum(weight)), 
-            by = c(&quot;id&quot; = &quot;id2&quot;)) %&gt;% 
-            mutate(count = ifelse(is.na(count), 0, count)) %&gt;% 
-            mutate(count2 = ifelse(is.na(count2), 0, count2)) %&gt;% 
+            reddit_edgelist %&gt;% group_by(id2) %&gt;%
+              summarise(count2 = sum(weight)),
+            by = c(&quot;id&quot; = &quot;id2&quot;)) %&gt;%
+            mutate(count = ifelse(is.na(count), 0, count)) %&gt;%
+            mutate(count2 = ifelse(is.na(count2), 0, count2)) %&gt;%
             mutate(id = id, imp = count + count2) %&gt;% select(id, imp) </code></pre>
 <p>To check it this worked I merging the result with the subreddit_key (which has subreddit names by their id) and arrange by subreddit importance.</p>
 <pre class="r"><code>left_join(subreddit_imp_key, subreddit_key %&gt;% dplyr::collect(), by = &quot;id&quot;) %&gt;%
   arrange(desc(imp))</code></pre>
 <pre><code>## # A tibble: 5,561 x 3
-##       id    imp subreddit    
-##    &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;        
-##  1 28096 107894 funny        
-##  2 15261 101239 AskReddit    
+##       id    imp subreddit
+##    &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;
+##  1 28096 107894 funny
+##  2 15261 101239 AskReddit
 ##  3 20340  81208 AdviceAnimals
-##  4  5043  73119 pics         
-##  5 10158  51314 gaming       
-##  6  5042  47795 videos       
-##  7 17856  47378 aww          
-##  8  2526  37311 WTF          
-##  9 22888  31702 Music        
+##  4  5043  73119 pics
+##  5 10158  51314 gaming
+##  6  5042  47795 videos
+##  7 17856  47378 aww
+##  8  2526  37311 WTF
+##  9 22888  31702 Music
 ## 10  5055  26666 todayilearned
 ## # … with 5,551 more rows</code></pre>
 <p>These appear be some of the most popular subreddits. They’re mostly about memes and gaming, which are two things that people commonly associate with Reddit.</p>
 <p>Next, I reweight the edge weights in reddit_edgelist by subreddit importance. The reason I do this is that the number of users connecting subreddits is partially a function of subreddit popularity. I want edge weights to instead track the overlap in subreddit communities. By reweighted by subreddit importance, I control for the influence of this potentially confounding variable.</p>
-<pre class="r"><code>reddit_edgelist &lt;- left_join(reddit_edgelist, subreddit_imp_key, 
-                             by = c(&quot;id&quot; = &quot;id&quot;)) %&gt;% 
+<pre class="r"><code>reddit_edgelist &lt;- left_join(reddit_edgelist, subreddit_imp_key,
+                             by = c(&quot;id&quot; = &quot;id&quot;)) %&gt;%
                   left_join(., subreddit_imp_key %&gt;% rename(imp2 = imp),
-                            by = c(&quot;id2&quot; = &quot;id&quot;)) %&gt;% 
+                            by = c(&quot;id2&quot; = &quot;id&quot;)) %&gt;%
   mutate(imp_fin = (imp + imp2)/2) %&gt;% mutate(weight = weight/imp_fin) %&gt;%
   select(id, id2, weight)
 
@@ -335,30 +335,30 @@ reddit_edgelist</code></pre>
 <pre><code>## # A tibble: 56,257 x 3
 ##       id   id2   weight
 ##    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
-##  1     1 12735 0.0141  
+##  1     1 12735 0.0141
 ##  2     1 10158 0.000311
-##  3     1  2601 0.00602 
+##  3     1  2601 0.00602
 ##  4     1 17856 0.000505
 ##  5     1 22900 0.000488
-##  6     1 25542 0.0185  
-##  7     1 15260 0.00638 
+##  6     1 25542 0.0185
+##  7     1 15260 0.00638
 ##  8     1 20340 0.000320
-##  9     2  2770 0.0165  
+##  9     2  2770 0.0165
 ## 10     2 15261 0.000295
 ## # … with 56,247 more rows</code></pre>
 <p>We now have our final edgelist. There are about 56,000 thousand rows in the data, though most edges have very small weights. Next, I use the igraph package to turn this dataframe into a graph object. Graph objects can be analyzed using igraph’s clustering algorithms. Let’s have a look at what this graph object looks like.</p>
 <pre class="r"><code>reddit_graph &lt;- graph_from_data_frame(reddit_edgelist, directed = FALSE)
 reddit_graph</code></pre>
-<pre><code>## IGRAPH e14409c UNW- 5561 56257 -- 
+<pre><code>## IGRAPH e14409c UNW- 5561 56257 --
 ## + attr: name (v/c), weight (e/n)
 ## + edges from e14409c (vertex names):
 ##  [1] 1--12735 1--10158 1--2601  1--17856 1--22900 1--25542 1--15260
 ##  [8] 1--20340 2--2770  2--15261 2--18156 2--20378 2--41    2--22888
 ## [15] 2--28115 2--10172 2--5043  2--28408 2--2553  2--2836  2--28096
-## [22] 2--23217 2--17896 2--67    2--23127 2--2530  2--2738  2--7610 
+## [22] 2--23217 2--17896 2--67    2--23127 2--2530  2--2738  2--7610
 ## [29] 2--20544 2--25566 2--3     2--7     2--7603  2--12931 2--17860
 ## [36] 2--6     2--2526  2--5055  2--18253 2--22996 2--25545 2--28189
-## [43] 2--10394 2--18234 2--23062 2--25573 3--264   3--2599  3--5196 
+## [43] 2--10394 2--18234 2--23062 2--25573 3--264   3--2599  3--5196
 ## [50] 3--7585  3--10166 3--10215 3--12959 3--15293 3--20377 3--20427
 ## + ... omitted several edges</code></pre>
 <p>Here we have a list of all of the edges from the dataframe, represented as subreddit ids connected by “–”. We can now use a clustering algorithm to analyze the community structure that underlies this subreddit network. The clustering algorithm I choose to use here is the Louvain algorithm. I opt to use this algorithm because it is fast and easy to interpret. The Louvain algorithm takes a network and groups its nodes into different communities in a way that maximizes the modularity of the resulting network. Modularity is a measure of network structure. Networks with high modularity consist of nodes that are grouped in such a way that nodes are densely connected within node groups and sparsely connected between node groups. By maximizing modularity, the Louvain algorithm finds a grouping of nodes that maximizes the number of within-group ties and minimizes the number of between-group ties.</p>
@@ -368,17 +368,17 @@ reddit_graph</code></pre>
 subreddit_by_comm &lt;- tibble(
   # Using map from purrr to extract subreddit ids from reddit_communities
   id = map(reddit_communities[], as.numeric) %&gt;% unlist,
-  # Creating a community ids column and using rep function with map to populate 
-  # column with community ids created by 
+  # Creating a community ids column and using rep function with map to populate
+  # column with community ids created by
   # Louvain alg
   comm = rep(reddit_communities[] %&gt;%
                names, map(reddit_communities[], length) %&gt;% unlist) %&gt;%
-               as.numeric) %&gt;% 
-  # Adding subreddit names  
-  left_join(., subreddit_key %&gt;% dplyr::collect(), by = &quot;id&quot;) %&gt;% 
+               as.numeric) %&gt;%
+  # Adding subreddit names
+  left_join(., subreddit_key %&gt;% dplyr::collect(), by = &quot;id&quot;) %&gt;%
   # Keeping subreddit name, subreddit id, community id
-  select(subreddit, id, comm) %&gt;% 
-  # Adding subreddit  importance  
+  select(subreddit, id, comm) %&gt;%
+  # Adding subreddit  importance
   left_join(., subreddit_imp_key, by = &quot;id&quot;)
 
 subreddit_by_comm</code></pre>
@@ -568,14 +568,14 @@ subreddit_by_comm</code></pre>
 <div id="visualizations" class="section level1">
 <h1>Visualizations</h1>
 <p>The first thing I want to do is return to the subreddit edgelist (reddit_edgelist) and add community id variables corresponding to each subreddit. I then filter the dataframe to only include unique edges. I also add a variable called weight_fin which is the mean of the subreddit edge weights between each community.</p>
-<pre class="r"><code>community_edgelist &lt;- left_join(reddit_edgelist, subreddit_by_comm %&gt;% select(id, comm), by = &quot;id&quot;) %&gt;% 
-  left_join(., subreddit_by_comm %&gt;% select(id, comm) %&gt;% rename(comm2 = comm), by = c(&quot;id2&quot;= &quot;id&quot;)) %&gt;% 
-  select(comm, comm2, weight) %&gt;% 
+<pre class="r"><code>community_edgelist &lt;- left_join(reddit_edgelist, subreddit_by_comm %&gt;% select(id, comm), by = &quot;id&quot;) %&gt;%
+  left_join(., subreddit_by_comm %&gt;% select(id, comm) %&gt;% rename(comm2 = comm), by = c(&quot;id2&quot;= &quot;id&quot;)) %&gt;%
+  select(comm, comm2, weight) %&gt;%
   mutate(id_pair = .5*(comm + comm2)*(comm + comm2 + 1) + pmax(comm,comm2)) %&gt;% group_by(id_pair) %&gt;%
-  mutate(weight_fin = mean(weight)) %&gt;% slice(1) %&gt;% ungroup %&gt;% select(comm, comm2, weight_fin) %&gt;% 
+  mutate(weight_fin = mean(weight)) %&gt;% slice(1) %&gt;% ungroup %&gt;% select(comm, comm2, weight_fin) %&gt;%
   filter(comm != comm2)</code></pre>
 <p>We now have a community-level edgelist, consisting of community ids for the community nodes connected by each edge. Many of the edges in this dataframe are connecting nodes to themselves (i.e. comm = comm2). We want to remove these. Let’s look at the data.</p>
-<pre class="r"><code>community_edgelist &lt;- community_edgelist %&gt;% filter(comm != comm2) %&gt;% 
+<pre class="r"><code>community_edgelist &lt;- community_edgelist %&gt;% filter(comm != comm2) %&gt;%
   arrange(desc(weight_fin))
 community_edgelist</code></pre>
 <pre><code>## # A tibble: 532 x 3
@@ -594,35 +594,35 @@ community_edgelist</code></pre>
 ## # … with 522 more rows</code></pre>
 <p>One potential problem is that largest weights (strongest ties) all seem to be between the biggest communities.</p>
 <p>I’m now ready to visualize this network of subreddit communities. The first thing I need to do is modify the edge weight variable to discriminate between communities that are more and less connected. I choose an arbitrary cutoff point (.007) and set all weights below this cutoff to 0. Although doing this creates a risk of imposing structure on the network where there is none, this cutoff will also help highlight significant ties between communities.</p>
-<pre class="r"><code>community_edgelist_ab &lt;- community_edgelist %&gt;% 
-  mutate(weight =  ifelse(weight_fin &gt; .007, weight_fin, 0)) %&gt;% 
+<pre class="r"><code>community_edgelist_ab &lt;- community_edgelist %&gt;%
+  mutate(weight =  ifelse(weight_fin &gt; .007, weight_fin, 0)) %&gt;%
   filter(weight!=0) %&gt;% mutate(weight = abs(log(weight)))</code></pre>
 <p>The visualization tools that I use here come from the visnetwork package. For an excellent set of tutorials on network visualizations in R, check out the tutorials section of Professor Katherine Ognyanova’s website (<a href="https://kateto.net/tutorials/">kateto.net/tutorials/</a>). Much of what I know about network visualization in R I learned from the “Static and dynamic network visualization in R” tutorial.</p>
 <p>Visnetwork’s main function, visNetwork, requires two arguments, one for nodes data and one for edges data. These dataframes need to have particular column names for visnetwork to be able to make sense of them. Let’s start with the edges data. The column names for the nodes corresponding to edges in the edgelist need to be “from” and “to”, and the column name for edge weights needs to be weight. I make these adjustments.</p>
-<pre class="r"><code>community_edgelist_mod &lt;- community_edgelist_ab %&gt;% 
+<pre class="r"><code>community_edgelist_mod &lt;- community_edgelist_ab %&gt;%
   rename(from = comm, to = comm2) %&gt;% select(from, to, weight) </code></pre>
 <p>Also, visnetwork’s default edges are curved. I prefer straight edges. To ensure edges are straight, add a smooth column and set it to <code>FALSE</code>.</p>
 <pre class="r"><code>community_edgelist_mod$smooth &lt;- F</code></pre>
 <p>I’m not ready to set up the nodes data. First, I extract all nodes from the community edgelist.</p>
 <pre class="r"><code>community_nodes &lt;- c(community_edgelist_mod %&gt;% .[[&quot;from&quot;]], community_edgelist_mod %&gt;% .[[&quot;to&quot;]]) %&gt;% unique</code></pre>
 <p>Visnetwork has this really cool feature that lets you view node labels by hovering over them with your mouse cursor. This is made possible by the fact that the package renders visualizations in javascript. I’m going to label each community with the names of the 4 most popular subreddits in that community.</p>
-<pre class="r"><code>comm_by_label &lt;- subreddit_by_comm %&gt;% arrange(comm, desc(imp)) %&gt;% group_by(comm) %&gt;% slice(1:4) %&gt;% 
+<pre class="r"><code>comm_by_label &lt;- subreddit_by_comm %&gt;% arrange(comm, desc(imp)) %&gt;% group_by(comm) %&gt;% slice(1:4) %&gt;%
   summarise(title = paste(subreddit, collapse = &quot; &quot;))</code></pre>
 <p>Next, I put node ids and community labels in a tibble. Note that the label column in this tibble has to be called “title”.</p>
 <pre class="r"><code>community_nodes_fin &lt;- tibble(comm = community_nodes) %&gt;% left_join(., comm_by_label, by = &quot;comm&quot;)</code></pre>
 <p>I want the nodes of my network to vary in size based on the size of each community. To do this, I create a community importance key. I’ve already calculated community importance above. I simply extract this score for each community from the subreddit_by_comm dataframe. I then merge the importance scores with the nodes data. I rename the community importance variable “size”, which is the node size column name that visnetwork recognizes.</p>
-<pre class="r"><code>comm_imp_key &lt;- subreddit_by_comm %&gt;% group_by(comm) %&gt;% slice(1) %&gt;% 
+<pre class="r"><code>comm_imp_key &lt;- subreddit_by_comm %&gt;% group_by(comm) %&gt;% slice(1) %&gt;%
   arrange(desc(comm_imp)) %&gt;% select(comm, comm_imp)
 
-community_nodes_fin &lt;- inner_join(community_nodes_fin, comm_imp_key, by = &quot;comm&quot;) %&gt;% 
+community_nodes_fin &lt;- inner_join(community_nodes_fin, comm_imp_key, by = &quot;comm&quot;) %&gt;%
   rename(size = comm_imp) </code></pre>
 <p>One issue is that my “mainstream Reddit/residual subreddits” community is that it is so much bigger than the other communities in the data that the network visualization will be overtaken by it if I don’t adjust the size variable. I remedy this by raising community size to the “.3”th power (close to the cube root).</p>
 <pre class="r"><code>community_nodes_fin &lt;- community_nodes_fin %&gt;% mutate(size = size^.3)</code></pre>
 <p>I can now enter the nodes and edges data into the visNetwork function. One last change to the nodes data - I had forgotten to name the node id column “id”. This is necessary for visnetwork to work. I make a few adjustments to the default parameters. One newish feature of visnetwork is that it lets you use layouts from the igraph package. I use visIgraphLayout to set the position of the nodes according to the Fruchterman-Reingold Layout Algorithm (layout_with_fr). I also adjust edge widths and highlightNearest to <code>TRUE</code>. This lets you highlight a node and the nodes it is connected to by clicking on it. Without further ado, let’s look at the network.</p>
-<pre class="r"><code>visNetwork(community_nodes_fin %&gt;% rename(id = comm), community_edgelist_mod) %&gt;% 
-  visIgraphLayout(layout = &quot;layout_with_fr&quot;) %&gt;% 
+<pre class="r"><code>visNetwork(community_nodes_fin %&gt;% rename(id = comm), community_edgelist_mod) %&gt;%
+  visIgraphLayout(layout = &quot;layout_with_fr&quot;) %&gt;%
   visEdges(width = 3.5) %&gt;% visOptions(., highlightNearest = TRUE)</code></pre>
-<div id="htmlwidget-1" style="width:672px;height:480px;" class="visNetwork html-widget"></div>
+<div id="htmlwidget-1" style="width: 672px; height: 480px; background: rgba(0, 0, 0, 0);" class="visNetwork html-widget html-widget-static-bound"><div id="titlehtmlwidget-1" style="font-family: Georgia, &quot;Times New Roman&quot;, Times, serif; font-weight: bold; font-size: 20px; text-align: center; display: none;"></div><div id="subtitlehtmlwidget-1" style="font-family: Georgia, &quot;Times New Roman&quot;, Times, serif; font-size: 12px; text-align: center; display: none;"></div><select class="dropdown" id="nodeSelecthtmlwidget-1" style="display: none;"></select><hr style="height:0px; visibility:hidden; margin-bottom:-1px;"><select class="dropdown" id="selectedByhtmlwidget-1" style="display: none;"></select><div id="maindivhtmlwidget-1" style="height:95%;background-color: inherit;"><div id="graphhtmlwidget-1" style="float:right; width:100%;height:100%;background-color: inherit;"><div class="vis-network" tabindex="900" style="position: relative; overflow: hidden; touch-action: pan-y; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;"><canvas width="1344" height="912" style="position: relative; touch-action: none; user-select: none; -webkit-user-drag: none; -webkit-tap-highlight-color: rgba(0, 0, 0, 0); width: 100%; height: 100%;"></canvas></div><div style="position: fixed;visibility:hidden;padding: 5px;font-family: verdana;font-size:14px;font-color:#000000;background-color: #f5f4ed;-moz-border-radius: 3px;-webkit-border-radius: 3px;border-radius: 3px;border: 1px solid #808074;box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.2);max-width:400px;word-break: break-all"></div><div id="footerhtmlwidget-1" style="font-family: Georgia, &quot;Times New Roman&quot;, Times, serif; font-size: 12px; text-align: center; background-color: inherit; display: none;"></div></div></div></div>
 <script type="application/json" data-for="htmlwidget-1">{"x":{"nodes":{"id":[133,171,48,118,83,155,85,163,100,196,65,200,113,161,25,81,94,156,8,38,143,207,71,62,127,110,56,105,106,108,107,162,39,42,7,144,140,174,128,153,154,76,190,166,91,87,104,109,77,99,178,165,84,152,112,17,114,92,54],"title":["Braveryjerk magicskyfairy CHART_BOT bleach","anime Naruto manga OnePiece","bonnaroo festivals radiohead gratefuldead","canada toronto vancouver montreal","Anarchism progressive socialism occupywallstreet","drawing redditgetsdrawn somethingimade woodworking","hockey fantasybaseball nhl Austin","finance Random_Acts_Of_Pizza Assistance shamelessplug","SuicideWatch bipolar UnsentLetters selfharm","nsfw tipofmypenis RealGirls ass","ShitRedditSays TheRedPill SRSFunny SRSBusiness","energy germany climate de","linux raspberry_pi engineering 3Dprinting","electronicmusic dubstep WeAreTheMusicMakers futurebeats","vexillology CrusaderKings paradoxplaza dwarffortress","ireland HomeImprovement architecture InteriorDesign","MMA JoeRogan comedy StandUpComedy","japan China linguistics mexico","NewOrleans Saints Louisiana batonrouge","animation MusicVideos MusicNews VideoEditing","daddit BabyBumps beyondthebump breastfeeding","privacy netsec torrents Piracy","Bitcoin Conservative Anarcho_Capitalism litecoin","halo InternetIsBeautiful multibeta WhatsInThisThing","Drugs bodybuilding Psychonaut vegan","Sneakers amiugly malehairadvice Rateme","web_design Entrepreneur programming webdev","magicTCG DnD rpg boardgames","jazzyhiphop Nujabes","mylittlepony MLPLounge furry MLPdrawingschool","gonewild gaybros r4r ainbow","statistics MachineLearning bigdata hadoop","Nightwing Robin","Civcraft MineZ hcfactions MineZtradingpost","comicbookart ImaginaryMonsters alternativeart ImaginaryLandscapes","guns knives coins EDC","wicked_edge cigars hookah wine","soccer Seattle Fifa13 Portland","wow darksouls Diablo Neverwinter","blackops2 battlefield3 dayz Eve","funny AskReddit AdviceAnimals pics","DotA2 tf2 SteamGameSwap starcraft","feedthebeast mindcrack minecraftsuggestions mcservers","electronic_cigarette discgolf microgrowery StonerEngineering","yugioh pokemontrades Pokemongiveaway pkmntcgtrades","cars motorcycles Autos sysadmin","bicycling Fishing gopro MTB","itookapicture EarthPorn AbandonedPorn HistoryPorn","australia india melbourne Cricket","MakeupAddiction RedditLaqueristas FancyFollicles SkincareAddiction","pagan occult Wicca tarot","excel Database vba MSAccess","sto DaystromInstitute stobuilds starblecch","MyrtleBeach Buyingforbaby","hotel hotels","giveaways sweepstakes","oklahoma okc tulsa Thunder","Aquariums snakes birdpics PlantedTank","moviecritic Critics"],"size":[11.2198889813003,13.2489009671681,7.38969925358015,13.1988438283638,12.4452832587173,12.8856775187077,19.6562530140943,11.9633498978206,7.58392879132654,16.0309619124293,8.85598822522407,7.36989392848036,12.6791559708967,20.7549430929722,8.41493539278968,9.76904678769258,10.1431972076667,11.2081651342002,5.18328528452286,8.79823577886667,9.59027092079126,7.51957855106628,13.5827768579172,11.3913887587739,15.0659084177505,13.1380371414821,18.8818706259804,14.3453202901946,2.68787537952229,12.2373202156014,15.3573462134771,4.45051634809317,3.00136892774457,10.1914225164271,6.07013079321565,14.2552668308638,10.6887195936571,16.4834682453184,17.1380865181107,16.6794396836784,69.2563338104714,26.0718480360435,11.9348593951868,13.4182618938667,10.8790389460749,19.1800128631377,15.1493840988297,17.9253875218123,12.790059496609,16.3917656839351,3.76463978612573,4.98063523456207,5.0910546283737,2.29739670999407,3.30916275726621,3.00136892774457,6.41688782906095,10.4476035322827,3.65189581477662],"x":[-0.189996123802651,-0.19949155046977,-0.222960085295615,0.209605695944723,-0.0821770560968496,0.124007351912514,0.362426522103727,0.00695172423169299,0.288998708130817,0.222297587602309,-0.076124669108588,-0.397088622792395,-0.193587734405444,0.141497089237796,-0.491726900335561,0.210997836175812,0.552460180772895,-0.0440501484716651,0.878897608473293,-0.71041775445363,0.48346814116437,-0.200289071640126,-0.267102489293655,0.102926628182925,0.249247392759315,0.0501063887877093,0.0913027261794672,-0.346353044231263,0.683131260366556,-0.374060023222717,0.247442157030258,0.472710748865686,0.959946931421696,-0.440130100061854,0.661254684084479,-0.434377637923037,-0.231682427441486,0.431148444743178,-0.872455153898384,-0.85098716999918,0.749293318036797,-0.187367477133355,-0.813879574187745,0.225597190330829,-0.52296114169667,-0.516724985964678,-0.895230688869206,-0.627821771966447,0.42478051643667,0.0436684816668245,0.69818063190416,0.162266988241745,-1,0.806727178294169,0.465883030625077,0.616540102666779,0.381516961753853,-0.72682149701007,1],"y":[-0.61123496637052,-0.194272443548909,-0.409539325086135,-0.44566546521688,-0.44114442507107,-0.1077774760663,-0.284060079769849,0.0474525862913466,0.0489556069156492,-0.093611989263553,-0.818435950056503,-0.168217437869122,0.153054335099804,-0.225282346354927,-0.427051636734631,0.103534493700788,-0.683016343119114,-0.257974825644922,-0.327548321930576,0.0248784151034862,-0.408466179995812,0.442081317729742,-0.293049803554757,0.387635048786108,-0.366302816833272,-0.166113370124817,0.156298978218132,0.300982130257251,-0.257154417830945,-0.912387620126385,-0.205316418640476,0.314776792241989,0.847107213816715,0.0867804973426167,0.0392519472509938,-0.0784335088072389,0.0205224093567675,-0.143296036188915,0.406088051248707,-0.251587644545876,0.842224089384485,-0.0880097318637147,0.183865381567618,-0.730025949059899,0.166821767049993,0.423331516623237,-0.0913459465118465,-0.509602938384492,0.0524878726555971,-0.49154689888153,-0.566863501983625,0.555128913020051,0.621442842915894,0.688998101182106,0.928624614799315,1,-1,-0.0688371170657012,0.671694198486107],"label":["133","171","48","118","83","155","85","163","100","196","65","200","113","161","25","81","94","156","8","38","143","207","71","62","127","110","56","105","106","108","107","162","39","42","7","144","140","174","128","153","154","76","190","166","91","87","104","109","77","99","178","165","84","152","112","17","114","92","54"]},"edges":{"from":[133,171,48,118,83,155,85,163,171,100,196,196,65,200,113,161,25,81,65,155,94,156,81,25,81,8,161,81,38,85,143,207,71,62,113,127,127,196,110,56,81,171,118,105,113,106,108,71,105,107,171,162,133,39,42,107,7,71,100,144,140,127,127,113,140,174,56,56,128,83,153,163,100,83,161,154,76,155,127,155,163,154,156,163,76,190,207,48,71,42,76,56,166,154,156,161,56,174,76,162,163,38,140,166,174,153,91,76,127,144,85,107,87,110,76,83,85,91,104,174,155,87,104,140,174,128,154,83],"to":[71,196,161,156,109,143,83,105,133,56,56,107,133,156,144,155,83,77,99,163,127,25,163,109,113,85,110,161,104,127,118,87,83,163,200,155,178,127,140,113,56,155,85,91,155,161,133,42,42,100,91,56,118,154,190,110,155,200,163,104,155,107,118,207,56,85,165,62,84,166,109,56,110,161,196,152,83,110,161,56,161,112,77,156,107,153,56,76,144,163,113,127,127,17,99,76,76,110,144,77,76,76,76,114,81,25,76,71,71,110,110,118,190,99,155,118,163,128,92,118,99,113,153,92,77,190,54,127],"weight":[3.24843462710975,3.42037429837582,3.5091072501325,3.57304763858881,3.60004824040732,3.66172846504799,3.67418873870393,3.67630067190708,3.68791572607727,3.72870094830061,3.74851453533141,3.75301705172493,3.77365664490257,3.77849161280362,3.79137140925541,3.79490163952156,3.80666248977032,3.86283276123737,3.95124371858143,3.96319129200255,3.97539639087487,3.98713047791495,4.00186370942794,4.02748843480221,4.06902675423781,4.07541655233658,4.11689485484675,4.12309397550809,4.12874598893943,4.13090772952646,4.13516655674236,4.20469261939097,4.21379717058632,4.22741140959488,4.23410650459726,4.25845369568759,4.25915253652335,4.31079912538551,4.31688445137107,4.31902850790841,4.32166644700259,4.32280727501391,4.32842399611893,4.33583725220451,4.34493677167455,4.34898678059568,4.35786486709544,4.35791207441189,4.36564315542336,4.36689732213509,4.4079507781548,4.4274096405217,4.43822973123244,4.43893708467475,4.44501247281432,4.45820446307487,4.4624538837865,4.46734386908069,4.46820433091493,4.47181313442958,4.47260836597211,4.48854133111349,4.48863636973214,4.52612697864764,4.52855908361625,4.53943502277855,4.55096871999097,4.57538868039973,4.58058471051548,4.58113360815985,4.58641874353444,4.58740012016563,4.59208494643944,4.59784932309443,4.59814557105113,4.59971515589125,4.60015764416455,4.61014571747076,4.61905771855972,4.62005879848184,4.64318825317561,4.6545731329367,4.65980475674945,4.66107781792639,4.66461764463151,4.67048965210873,4.67418565490219,4.68048180803735,4.69599091756734,4.69934335600534,4.70032210124862,4.70091631857983,4.70267650776935,4.70391936093559,4.71514503919666,4.72534520895208,4.72906100754672,4.73211955040891,4.74065454590159,4.76430840732639,4.76955823163971,4.76962474095362,4.78853286729046,4.79372229253268,4.79755044474296,4.79785452981759,4.80001998629801,4.81007852377921,4.81143546027007,4.81218435537242,4.81239292939399,4.81276490691267,4.8283137373023,4.84744495149823,4.85331413434137,4.87118220577664,4.87328710294503,4.89879867938624,4.89912870778002,4.90277748137478,4.90655583110958,4.91343911910321,4.92698889105661,4.92906364040244,4.93190750505948,4.94861130343316,4.95630585658862,4.95970234305753],"smooth":[false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false]},"nodesToDataframe":true,"edgesToDataframe":true,"options":{"width":"100%","height":"100%","nodes":{"shape":"dot","physics":false},"manipulation":{"enabled":false},"edges":{"smooth":false,"width":3.5},"physics":{"stabilization":false}},"groups":null,"width":null,"height":null,"idselection":{"enabled":false,"style":"width: 150px; height: 26px","useLabels":true,"main":"Select by id"},"byselection":{"enabled":false,"style":"width: 150px; height: 26px","multiple":false,"hideColor":"rgba(200,200,200,0.5)"},"main":null,"submain":null,"footer":null,"background":"rgba(0, 0, 0, 0)","igraphlayout":{"type":"square"},"highlight":{"enabled":true,"hoverNearest":false,"degree":1,"algorithm":"all","hideColor":"rgba(200,200,200,0.5)","labelOnly":true},"collapse":{"enabled":false,"fit":false,"resetHighlight":true,"clusterOptions":null,"keepCoord":true,"labelSuffix":"(cluster)"}},"evals":[],"jsHooks":[]}</script>
 </div>
 
