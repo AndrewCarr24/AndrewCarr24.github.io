@@ -23,12 +23,12 @@
     <body>
         <nav class="nav">
   <div class="nav-container">
-    <a href="/">
+    <a href="/tale/">
       <h2 class="nav-title">Data Diarist</h2>
     </a>
     <ul>
       <li><a href="/tale/about">About</a></li>
-      <li><a href="https://github.com/datadiarist">Github</a></li>
+      <li><a href="/tale/">Github</a></li>
     </ul>
   </div>
 </nav>
@@ -54,10 +54,6 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 
 
 
-<script src="htmlwidgets.js"></script>
-<link href="vis.css" rel="stylesheet" />
-<script src="vis.min.js"></script>
-<script src="visNetwork.js"></script>
 
 
 <p>Since it was founded in 2005, Reddit has developed into a popular place for sharing opinions and ideas, rating web content, and aggregating news on the internet. Reddit is organized into thousands of user-made communities, called subreddits, which cover a broad range of subjects, including politics, sports, technology, personal hobbies, and self-improvement, to name a few. Given that Reddit is structured in this way, it is natural to think of Reddit as a population of users organized into many overlapping communities (subreddits). In other words, it makes sense to conceptualize Reddit as having an underlying social structure. Uncovering this structure may provide insights into the social organization of internet culture more generally.</p>
@@ -120,7 +116,7 @@ Once we have unzipped this file, load the readr, jsonlite, and dplyr packages. U
     filter(author != &quot;[deleted]&quot;)</code></pre>
 <pre class="r"><code>reddit_data %&gt;% sdf_nrow</code></pre>
 <pre><code>## [1] 2377314</code></pre>
-<p>After filtering out posts from deleted accounts, the number of Reddit submissions for March 2013 is 2,377,314. The next thing we need to do is filter Reddit submissions from users who only posted once. Based on how we’ve operationalized network ties, these users add nothing to our data. We also want to remove users who have posted too many times. Some Reddit accounts are bots that automatically posts to hundred of subreddits. Not only does including these accounts distort our understanding of how communities are organized on Reddit, but they cause our data to be exponentially larger for the reasons I explained above. Unfortunately, there’s no way to determine whether a user is a bot just based on the frequency with which they post. My arbitrary cutoff is 60. This cutoff is aggressive. In other words, it errs on the side of filtering humans who post a lot by human standards rather than erring on the side of keeping bots who post a little by bot standards.</p>
+<p>After filtering out posts from deleted accounts, the number of Reddit submissions for May 2013 is 2,377,314. The next thing we need to do is filter Reddit submissions from users who only posted once. Based on how we’ve operationalized network ties, these users add nothing to our data. We also want to remove users who have posted too many times. Some Reddit accounts are bots that automatically posts to hundred of subreddits. Not only does including these accounts distort our understanding of how communities are organized on Reddit, but they cause our data to be exponentially larger for the reasons I explained above. Unfortunately, there’s no way to determine whether a user is a bot just based on the frequency with which they post. My arbitrary cutoff is 60. This cutoff is aggressive. In other words, it errs on the side of filtering humans who post a lot by human standards rather than erring on the side of keeping bots who post a little by bot standards.</p>
 <pre class="r"><code>reddit_data &lt;- reddit_data %&gt;% group_by(author) %&gt;% mutate(count = count()) %&gt;%
     filter(count &lt; 60 &amp; count &gt; 1) %&gt;%
     ungroup()
@@ -142,7 +138,7 @@ reddit_data &lt;- left_join(reddit_data, subreddit_key, by = &quot;subreddit&quo
 ## 4 babydall1267     144    18 123recipes          2477
 ## 5 babydall1267     144    18 123recipes          2477
 ## 6 babydall1267     144    18 123recipes          2477</code></pre>
-<p>We now have 5 variables. The count variable shows the number of times a user has posted to Reddit. The id variable gives a numeric identifier to each subreddit. We are now ready to convert this data to network format. The first thing we need to do is take an inner_join of our data with itself by the “author” variable. For each user, the number of rows this returns will be the square of the number of submissions from that user. For example, the result of the code below shows that the user named “–will–” posted 7 times in the month of March.</p>
+<p>We now have 5 variables. The count variable shows the number of times a user has posted to Reddit. The id variable gives a numeric identifier to each subreddit. We are now ready to convert this data to network format. The first thing we need to do is take an inner_join of our data with itself by the “author” variable. For each user, the number of rows this returns will be the square of the number of submissions from that user. For example, the result of the code below shows that the user named “–will–” posted 7 times in the month of May.</p>
 <pre class="r"><code>example_user &lt;- reddit_data %&gt;% filter(author == &quot;--will--&quot;)
 example_user</code></pre>
 <pre><code>## # Source: spark&lt;?&gt; [?? x 5]
@@ -206,7 +202,7 @@ example_user_network</code></pre>
 <p>We’ve only managed to cut the data to 20 rows, not 10. What happened? The problem is with how we filtered duplicate rows above. Specifically, the grouping procedure used above considers links between two subreddits to be distinct if their own is different. For example, a row where subreddit is “pics” and subreddit2 is “AskReddit” is considered to belong to a distinct group from a row where subreddit is “AskReddit” and subreddit2 is “pics”. Unfortunately, I am not aware of a function in dplyr that filters based on multiple columns but regardless of the order of the items in those columns. How might we solve this problem?</p>
 <p>This is where our id variables will prove useful. If we can mutate the two id variables into a variable that gives a unique identifier to each subreddit pair regardless of the order of subreddits, we can filter duplicates on the basis of this identifier. We need some kind of mathematical equation that takes two numbers and returns a unique number (i.e. a number that can only be produced from these two numbers) regardless of number order. One equation that does this is the Cantor Pairing Function (<a href="https://en.wikipedia.org/wiki/Pairing_function">wikipedia.org/wiki/Pairing_function</a>):</p>
 <div class="figure">
-<img src="Screen%20Shot%202019-07-23%20at%208.21.48%20PM.png" style="width:75.0%" style="height:75.0%" />
+<img src="/post/2019-07-22-mapping-the-underlying-social-structure-of-reddit_files/Screen%20Shot%202019-07-23%20at%208.21.48%20PM.png" style="width:75.0%" style="height:75.0%" />
 
 </div>
 <p>Let’s define a function in R that takes a dataframe and two id variables, runs the id variables through Cantor’s pairing function and appends this to the dataframe, filters duplicate cantor ids from the dataframe, and returns the result. We’ll call this the cantor_filter.</p>
@@ -250,13 +246,13 @@ example_user_network</code></pre>
 ##  1 --5Dhere   depression    awakened        7644 29936   135   135   7.06e8
 ##  2 --Adam--   AskReddit     techsupport    15261 28113   135   142   9.41e8
 ##  3 --Caius--  summonerscho… leagueoflegen…    79     3   124   142   3.48e3
-##  4 --Gianni-- gaming        movies         10158 20348   131   124   4.65e8
-##  5 --Gianni-- gaming        AskReddit      10158 15261   131   125   3.23e8
-##  6 --Gianni-- gaming        pics           10158  5043   131   126   1.16e8
-##  7 --Gianni-- AskReddit     videos         15261  5042   125   138   2.06e8
+##  4 --Gianni-- gaming        AskReddit      10158 15261   131   125   3.23e8
+##  5 --Gianni-- gaming        videos         10158  5042   131   138   1.16e8
+##  6 --Gianni-- movies        AskReddit      20348 15261   124   125   6.34e8
+##  7 --Gianni-- pics          AskReddit       5043 15261   126   125   2.06e8
 ##  8 --Gianni-- pics          videos          5043  5042   126   138   5.09e7
-##  9 --Gianni-- movies        pics           20348  5043   124   126   3.22e8
-## 10 --Gianni-- pics          AskReddit       5043 15261   126   125   2.06e8
+##  9 --Gianni-- gaming        pics           10158  5043   131   126   1.16e8
+## 10 --Gianni-- AskReddit     videos         15261  5042   125   138   2.06e8
 ## # … with more rows</code></pre>
 <pre class="r"><code>reddit_network_data %&gt;% sdf_nrow</code></pre>
 <pre><code>## [1] 1685921</code></pre>
@@ -349,9 +345,9 @@ reddit_edgelist</code></pre>
 <p>We now have our final edgelist. There are about 56,000 thousand rows in the data, though most edges have very small weights. Next, I use the igraph package to turn this dataframe into a graph object. Graph objects can be analyzed using igraph’s clustering algorithms. Let’s have a look at what this graph object looks like.</p>
 <pre class="r"><code>reddit_graph &lt;- graph_from_data_frame(reddit_edgelist, directed = FALSE)
 reddit_graph</code></pre>
-<pre><code>## IGRAPH e14409c UNW- 5561 56257 --
+<pre><code>## IGRAPH a14c758 UNW- 5561 56257 --
 ## + attr: name (v/c), weight (e/n)
-## + edges from e14409c (vertex names):
+## + edges from a14c758 (vertex names):
 ##  [1] 1--12735 1--10158 1--2601  1--17856 1--22900 1--25542 1--15260
 ##  [8] 1--20340 2--2770  2--15261 2--18156 2--20378 2--41    2--22888
 ## [15] 2--28115 2--10172 2--5043  2--28408 2--2553  2--2836  2--28096
@@ -623,7 +619,15 @@ community_nodes_fin &lt;- inner_join(community_nodes_fin, comm_imp_key, by = &qu
   visIgraphLayout(layout = &quot;layout_with_fr&quot;) %&gt;%
   visEdges(width = 3.5) %&gt;% visOptions(., highlightNearest = TRUE)</code></pre>
 <iframe src="net_2013.html" width = "800" height = "550" scrolling = "no" frameborder = "0"></iframe>
-<script src="//yihui.name/js/math-code.js"></script>
+<p>The communities of Reddit do not appear to be structured into distinct categories. We don’t see a cluster of communities involving hobbies and a different cluster of advice communities, for instance. Instead, we have some evidence to suggest that the strongest ties are among some of the larger subcultures of Reddit (or they were in 2013). Many of the nodes in the large cluster of communities above are in the 2-30 range in terms of community size. On the other hand, the largest community (mainstream Reddit/subreddits that don’t belong in a particular community) is out on a island. This does not mean that people who post to the mainstream subreddits never post to more fringe subreddits (recall that I dropped edges with small weights). Rather, it suggests that the ties created by these users are weaker than the ties created by users who post to multiple “fringier” communities.</p>
+<p>The substance of some of these communities lends credence to this interpretation. Many of the communities in the large cluster of Reddit communities are somewhat related in their content. There are a lot of gaming communities, several drugs and music communities, a couple of sports communities, and few communities that combine gaming, music, sports, and drugs in different ways. Indeed, most of the communities in this cluster revolve around activities commonly associated with young men. I may be reaching a bit here, but one might infer from this network that Reddit is organized into two social spheres, one consisting young men and the other consisting of everybody else. At the very least, these results do not weaken such a claim. Finally, I should caution the reader against extrapolating too much from the network above. These ties are just based on a sample of 30 days of submissions. It’s possible that something occurred during this period that momentarily brought Reddit certain communities closer together than they would be otherwise. There are links among some nodes in the network that don’t make much logical sense. For instance, the linux/engineering/3D-Printing community (which only sort of makes sense as a community) is linked to a “guns/knives/coins” community. This strikes me as a bit strange, and I wonder if these communities would look the same if I samples data from another time period. Still, many of the links make a lot of sense. For example, the Bitcoin/Conservative/Anarcho_Capitalism community is tied to the Anarchism/progressive/socialism/occupywallstreet community. The Drugs/bodybuilding community is connected to the MMA/Joe Rogan community. That one makes almost too much sense. Anyway, I encourage you to click on the network nodes to see what you find.</p>
+<p>As interesting as these results are, I can’t help but feel like we’re not making the best use of the data available to us. One of the coolest things about the Reddit repository is that it contains temporally precise information on everything that’s happen on Reddit from its inception to only a few months ago. In the final section of this post, I rerun the above analyses on all the Reddit submissions in May between 2014-2019. I’m using the bash script I posted about to do this. I’m simply entering the .csv file for each time period into the code from this post and generating a separate community network for each period. Let’s have a look at them and hopefully gain some insight into how Reddit has evolved over the past several years.</p>
+<iframe src="net_2015.html" width = "800" height = "550" scrolling = "no" frameborder = "0"></iframe>
+<p>Here’s 2015</p>
+</div>
+
+
+		<script src="//yihui.name/js/math-code.js"></script>
 <script async
 src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
 </script>
@@ -640,7 +644,7 @@ src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM
 
         		<footer>
 			<span>
-			&copy; <time datetime="2019-07-25 11:00:39.899506 -0400 EDT m=&#43;7.647509318">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
+			&copy; <time datetime="2019-07-25 23:16:02.0857 -0400 EDT m=&#43;6.849791653">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
 			</span>
 		</footer>
 
