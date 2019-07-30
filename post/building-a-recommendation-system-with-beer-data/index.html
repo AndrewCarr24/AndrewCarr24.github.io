@@ -92,7 +92,7 @@ i &lt;- beer_data %&gt;%
 
 # Repeat user_id by the number of ratings associated with each user
 i &lt;- rep(1:num_users, i)</code></pre>
-<p>Producing a vector of columns associated with each user rating is a bit more tricky. First, I create a set of ids for each unique beer in the Spark dataframe. I merge these to the original dataframe, group the dataframe by user_ids, and use the collect_list function to produce a dataframe of beer ids nested in user ids. Finally, I arrange the data by user_id (this part is crucial to making sure the rows and columns match up) and use the explode function to unnest the lists of beer_ids associated with each user. What I’m left with as a vector of column numbers that represent beer ids of user ratings and that are sorted by user id. I’ve annotated the code below to make this as clear as possible. If you have any questions about how this works, please ask them in the comments section.</p>
+<p>To make my “j” vector, I need a vector of column numbers that represent beer ids corresponding to each user rating and sorted by user id. This takes several step, which I’ve annotated in code below.</p>
 <pre class="r"><code># Creating Spark dataframe with ids for each beer
 beer_key &lt;- beer_data %&gt;% distinct(beer_full) %&gt;% sdf_with_sequential_id
 
@@ -108,14 +108,13 @@ j &lt;- left_join(beer_data, beer_key, by = &quot;beer_full&quot;) %&gt;%
 
 # Turning beer key (beers by unique id) from Spark dataframe to regular dataframe
 beer_key &lt;- beer_key %&gt;% collect</code></pre>
-<p>Last, I have to extract a vector of user ratings from the Spark dataframe. To do this I just sort the data by user_id, bring the data into R (with the collect function) and extract the user_score vector.</p>
+<p>Last, I extract a vector of user ratings from the dataframe. To do this I just sort the data by user_id, bring the data into R (with the collect function) and extract the user_score vector.</p>
 <pre class="r"><code># Sort data by user_id, bring data into R, and extract user_score vector
 x &lt;- beer_data %&gt;% arrange(user_id) %&gt;% select(user_score) %&gt;% collect %&gt;%
      .[[&quot;user_score&quot;]]</code></pre>
-<p>Finally, I use the sparseMatrix function from the Matrix package to create a sparse matrix.</p>
-<pre class="r"><code>beer_sparse &lt;- sparseMatrix(i = i, j = j, x = x)</code></pre>
-<p>Here’s how the sparse matrix is represented in R.</p>
-<pre class="r"><code>head(beer_sparse)</code></pre>
+<p>I can now use the sparseMatrix function from the Matrix package to create a sparse matrix. Here’s how the sparse matrix is represented in R.</p>
+<pre class="r"><code>beer_sparse &lt;- sparseMatrix(i = i, j = j, x = x)
+head(beer_sparse)</code></pre>
 <pre><code>## 6 x 24542 sparse Matrix of class &quot;dgCMatrix&quot;
 ##
 ## [1,] .    .    .    . .   .    .    4.25 . .    .    .    .   .    .
@@ -141,51 +140,47 @@ x &lt;- beer_data %&gt;% arrange(user_id) %&gt;% select(user_score) %&gt;% colle
 ##
 ##  .....suppressing columns in show(); maybe adjust &#39;options(max.print= *, width = *)&#39;
 ##  ..............................</code></pre>
-<p>This provides a snapshot of the first six users in the sparse matrix. The dots represent empty cells, the numbers ratings. While large for a sparse matrix, this object is only 63Mb, which is manageable for our purposes. Our next step is to calculate similarity score among beers. But before we can do this, we need to make some more modifications to the data.</p>
-<p>First, I do a partial singular value decomposition (SVD) of the sparse matrix. An SVD is a kind of matrix factorization that breaks an m by n matrix into three parts: an m by m matrix (“U”), an m by n diagonal matrix (“d”), and an n by n matrix (“V”). A partial SVD keeps only the columns and rows in U and V that correspond with the largest singular values in d. The irlba package in R lets you specify the number of singular values to use in a partial SVD. Most useful for our purposes, irlba is able to perform partial SVDs on sparse matrices.</p>
-<p>In sum, the partial SVD can be thought of as a dimensionality reduction technique that makes performing operations on large matrices less computationally expensive. This is a particularly useful technique for sparse matrices, which can often be transformed into smaller matrices with little loss of information (given that many of the rows are linear combinations of other rows).</p>
-<p>I make the arbitrary choice here to keep the 25 largest singular values, factoring my sparse matrix into three component matrices: an ~105,000x25 matrix (U), a 25x25 matrix (d), and a ~25x24,500 matrix (V). The irlba package automatically transposes V, returning a 24,500x25 matrix. Perhaps in a future post I will consider the implications of how many singular values I use for the validity of the recommender system. For now, here’s the code to perform the partial SVD.</p>
-<pre class="r"><code>beer_sparse_svd &lt;- irlba(beer_sparse, 25)</code></pre>
-<p>The matrix that interests me is V, which can be thought of as representing ratings patterns for 24,500 beers (the rows) along 25 latent dimensions (the columns), albeit at a loss of some information. Here’s a peak at V.</p>
-<pre class="r"><code>head(beer_sparse_svd$v)</code></pre>
+<p>This provides a snapshot of the first six users in the sparse matrix. The dots represent empty cells and the numbers represent ratings. This object is only 63Mb, large for a sparse matrix, but manageable for our purposes. Our next step is to calculate similarity scores among beers. But before we can do this, we need to make some more modifications to the data.</p>
+<p>One problem with the data in its present form is that information for each beer is stored in a high dimensional vector. Calculating similarity scores in such high dimensional spaces poses computational and mathematical problems. One common way to get around this issue is to make do a partial singular value decomposition (SVD) of the sparse matrix. An SVD is a kind of matrix factorization that breaks an m by n matrix into three parts: an m by m matrix (“U”), an m by n diagonal matrix (“d”), and an n by n matrix (“V”). A partial SVD keeps only the columns and rows in U and V that correspond with the largest singular values in d. This amounts to replacing the high dimensional matrix with some lower dimensional matrices that retain much of the information in the original matrix. The irlba package in R lets you specify the number of singular values to use in a partial SVD. Most useful for our purposes, irlba can perform partial SVDs on sparse matrices. I make the arbitrary choice here to keep the 25 largest singular values, factoring my sparse matrix into an ~105,000x25 matrix (U), a 25x25 matrix (d), and a ~25x24,500 matrix (V). The irlba package automatically transposes V, returning a 24,500x25 matrix. The matrix that interests me is V, which can be thought of as representing ratings patterns for 24,500 beers (the rows) along 25 latent dimensions (the columns), albeit at a loss of some information. Let’s have a look at V.</p>
+<pre class="r"><code>beer_sparse_svd &lt;- irlba(beer_sparse, 25)
+head(beer_sparse_svd$v)</code></pre>
 <pre><code>##               [,1]          [,2]         [,3]          [,4]         [,5]
-## [1,] -0.0256985740 -0.0229678228 -0.005193778  0.0051384220  0.052757404
-## [2,] -0.0062777787 -0.0049419788 -0.003314623 -0.0069633190  0.007472983
-## [3,] -0.0005042966 -0.0002114207 -0.001387032 -0.0003306757  0.001741769
-## [4,] -0.0022645231 -0.0058033722 -0.001458080 -0.0036489648 -0.003678065
-## [5,] -0.0296513661 -0.0466452519 -0.003826150  0.0118276998 -0.016366716
-## [6,] -0.0105372982 -0.0086427265 -0.017151058  0.0074637989  0.001469116
+## [1,] -0.0256985740 -0.0229678228 -0.005193778  0.0051384220 -0.052757404
+## [2,] -0.0062777787 -0.0049419788 -0.003314623 -0.0069633190 -0.007472983
+## [3,] -0.0005042966 -0.0002114207 -0.001387032 -0.0003306757 -0.001741769
+## [4,] -0.0022645231 -0.0058033722 -0.001458080 -0.0036489648  0.003678065
+## [5,] -0.0296513661 -0.0466452519 -0.003826150  0.0118276998  0.016366716
+## [6,] -0.0105372982 -0.0086427265 -0.017151058  0.0074637989 -0.001469116
 ##              [,6]         [,7]          [,8]          [,9]        [,10]
-## [1,] -0.032494474 -0.011456998 -0.0108729014 -0.0035516823 -0.020489015
-## [2,] -0.010387374 -0.019802582 -0.0009407164  0.0131732961  0.002966423
-## [3,] -0.001858592 -0.002485591  0.0004080029  0.0024073091  0.001065007
-## [4,]  0.008207708 -0.008591826  0.0073319230  0.0007184202 -0.003605576
-## [5,]  0.049587403 -0.043005553  0.0051627987  0.0237230351 -0.007313664
-## [6,] -0.007417017  0.013712596  0.0028269823  0.0088606013 -0.011820460
-##              [,11]        [,12]         [,13]        [,14]         [,15]
-## [1,]  0.0155698493  0.032879244 -0.0113961215 -0.039494023  0.0008142866
-## [2,] -0.0222479391  0.047532155 -0.0116251008  0.021787547 -0.0213485210
-## [3,] -0.0027782202  0.006784769 -0.0022113610  0.005041011 -0.0035659751
-## [4,]  0.0016511631  0.001963106 -0.0003878318  0.001373413  0.0033941471
-## [5,] -0.0192508819 -0.036609922 -0.0007755873 -0.022602177  0.0226693302
-## [6,]  0.0009004369  0.014294341 -0.0004086656 -0.006704642  0.0059271281
+## [1,] -0.032494474 -0.011456998  0.0108729014  0.0035516823 -0.020489015
+## [2,] -0.010387374 -0.019802582  0.0009407164 -0.0131732961  0.002966423
+## [3,] -0.001858592 -0.002485591 -0.0004080029 -0.0024073091  0.001065007
+## [4,]  0.008207708 -0.008591826 -0.0073319230 -0.0007184202 -0.003605576
+## [5,]  0.049587403 -0.043005553 -0.0051627987 -0.0237230351 -0.007313664
+## [6,] -0.007417017  0.013712596 -0.0028269823 -0.0088606013 -0.011820460
+##              [,11]        [,12]        [,13]        [,14]         [,15]
+## [1,] -0.0155698493 -0.032879244 0.0113961215  0.039494023 -0.0008142866
+## [2,]  0.0222479391 -0.047532155 0.0116251008 -0.021787547  0.0213485210
+## [3,]  0.0027782202 -0.006784769 0.0022113610 -0.005041011  0.0035659751
+## [4,] -0.0016511631 -0.001963106 0.0003878318 -0.001373413 -0.0033941471
+## [5,]  0.0192508819  0.036609922 0.0007755873  0.022602177 -0.0226693302
+## [6,] -0.0009004369 -0.014294341 0.0004086656  0.006704642 -0.0059271281
 ##             [,16]         [,17]        [,18]         [,19]         [,20]
-## [1,] -0.018455648 -0.0198518744  0.025979319 -0.0040638017 -2.509825e-02
-## [2,]  0.024394173 -0.0173652077 -0.034726167 -0.0359433350 -3.948808e-03
-## [3,]  0.004901526 -0.0010760466 -0.006260497 -0.0042772709 -4.698749e-05
-## [4,]  0.010084600  0.0001870042  0.002243230 -0.0023221599  5.838162e-03
-## [5,]  0.001787687 -0.0110909919 -0.021767510  0.0355030003 -2.935001e-02
-## [6,] -0.015706574  0.0138034722 -0.006490726 -0.0006405754 -3.582702e-03
+## [1,] -0.018455648 -0.0198518744  0.025979319  0.0040638017 -2.509825e-02
+## [2,]  0.024394173 -0.0173652077 -0.034726167  0.0359433350 -3.948808e-03
+## [3,]  0.004901526 -0.0010760466 -0.006260497  0.0042772709 -4.698748e-05
+## [4,]  0.010084600  0.0001870042  0.002243230  0.0023221599  5.838162e-03
+## [5,]  0.001787687 -0.0110909919 -0.021767510 -0.0355030003 -2.935001e-02
+## [6,] -0.015706574  0.0138034722 -0.006490726  0.0006405754 -3.582702e-03
 ##              [,21]        [,22]         [,23]        [,24]        [,25]
-## [1,]  0.0025110958 -0.011861830 -0.0045983466 -0.011089443  0.003169627
-## [2,]  0.0007522815  0.023399756  0.0024942007  0.005222929 -0.021328947
-## [3,]  0.0001123454  0.004374986 -0.0008616113  0.003446871 -0.001396173
-## [4,]  0.0005898598 -0.008568203 -0.0060018847  0.002906941  0.004492599
-## [5,]  0.0095077196  0.059850067  0.0720446796  0.054602872  0.091765715
-## [6,] -0.0060200619 -0.007056968 -0.0165475385  0.001281757  0.011643301</code></pre>
-<p>This displays numbers that place 6 beers in a 25-dimensional space. These numbers don’t mean anything prima facie. They are both positive and negative and cluster very closely to 0. Hopefully, calculating similarity scores among these 25-dimensional vectors will produce results that make sense. I am now ready to calculate similarity scores among my ~24,500 beers. While there are many options out there for measuring similarity between vectors, I choose one of the simplest and most commonly-used ones: cosine distance. This will likely not produce the best possible recommendation engine from this data; I choose this measure to limit the length of this post and because it’s suitable for a demonstration of how to code a recommendation system on big-ish data from scratch in R. The cosine distance between two vectors is simply the dot product of the vectors divided by the product of the norms of these vectors. When these vectors are the same this distance will be 1. Otherwise, we will get a number between 0 and 1. I calculate the cosine distance with a function from the lsa package.</p>
-<p>Before we can find similarity scores among the beers in the data, we must consider one last issue. Calculating similarity scores among 24,500 beers would produce 24,500 choose 2, or roughly 300 million, similarity scores. We once again find ourselves exceeding the size limits of what can be stored in the R workspace. I sidestep this issue by computing all similarity scores for each beer and only keeping the largest 500. 500 is another arbitrary cutoff and in a future post I may examine how varying this cutoff affects the results.</p>
-<p>Although the 500 cutoff resolves the size concern, we are still left with the task of computing 300 million similarity scores, most of which will be discarded. To deal with this, I use the foreach, parallel, and doParallel packages to utilize the 12 cores of my computer for this task.</p>
+## [1,] -0.0025110949 -0.011861837 -0.0045983571 -0.011089668 -0.003170699
+## [2,] -0.0007522813  0.023399754  0.0024941941  0.005222849  0.021328185
+## [3,] -0.0001123454  0.004374987 -0.0008616056  0.003446883  0.001396746
+## [4,] -0.0005898594 -0.008568202 -0.0060018691  0.002906930 -0.004491131
+## [5,] -0.0095077192  0.059850063  0.0720446733  0.054602697 -0.091766181
+## [6,]  0.0060200611 -0.007056966 -0.0165475536  0.001281879 -0.011644821</code></pre>
+<p>These numbers represent the ratings patterns for 6 beers mapped onto 25 dimensions. I am now ready to calculate similarity scores. While there are many options out there for computing similarity between vectors, I choose one of the simplest and most commonly-used ones: cosine distance. Although there are many more sophisticated and complex ways to compute similarity for building recommendation systems, cosine distances should be fine for this post. The cosine distance between two vectors is simply their dot product divided by the product of their norms. I calculate the cosine distance with a function from the lsa package.</p>
+<p>Before we can find similarity scores among the beers in the data, we must consider one last issue. Calculating similarity scores among 24,500 beers would produce 24,500 choose 2, or roughly 300 million, similarity scores. We once again find ourselves exceeding the size limits of what can be stored in the R workspace. I sidestep this issue by computing all similarity scores for each beer and only keeping the largest 500. Although the 500 cutoff resolves the size concern, we are still left with the task of computing 300 million similarity scores, most of which will be discarded. To deal with this, I use the foreach, parallel, and doParallel packages to parallelize this task. This took about fifteen minutes to run on my computer.</p>
 <pre class="r"><code># Setting up and registering a cluster for parallel processing
 cl &lt;- makeCluster(detectCores() - 1)
 registerDoParallel(cl)
@@ -216,8 +211,7 @@ item_similarity_matrix &lt;- foreach(i = 1:nrow(beer_key),
 
   return(sims.test)
 }</code></pre>
-<p>On my computer, this code took about fifteen minutes to run. On a computer with fewer cores, this will take a lot longer. This code returns a list of ~24,500 tibbles, each with 500 rows. This is a large object, 1.4Gb. If this affects R’s performance we can always return to this bit of code and change 500 to a smaller number.</p>
-<p>Let’s have a look at a tibble from this list. I’ll search for one of my favorite beers, Ballast Point Sculpin, to find out which beers are most similar to the Sculpin.</p>
+<p>Let’s have a look at the resulting list and test its face validity. I’ll search for one of my favorite beers, Ballast Point’s Sculpin IPA, to find out which beers are most similar to the Sculpin.</p>
 <pre class="r"><code># Searching for Sculpin in the beer_key
 grep(&quot;Sculpin&quot;, beer_key$beer_full, value = TRUE)</code></pre>
 <pre><code>## [1] &quot;Ballast Point Brewing Company Sculpin - Habanero&quot;
@@ -245,8 +239,7 @@ item_similarity_matrix[grep(&quot;Sculpin&quot;, beer_key$beer_full)[6]]</code><
 ##  9 Bear Republic Brewing Co. Racer 5 India Pale Ale        6211 0.519
 ## 10 Lagunitas Brewing Company Hop Stoopid                   2022 0.506
 ## # … with 490 more rows</code></pre>
-<p>This tibble displays the 500 most similar beers to Sculpin sorted in decreasing order of their similarity. In my opinion as an inveterate beer drinker, this list has face validity. The list consists mainly of American IPAs, which is what Sculpin is. I can attest to the similarity of some of the beers on this list (Bear Republic’s Racer 5, Stone’s Enjoy By) to Sculpin. It’s also worth noting that many of the beers on this list come from Californian breweries, which is where Sculpin is brewed. This likely reflects a tendency of reviewers to be more familiar with beers in their own region. This sort of regional clustering presents problems for the validity of the recommendation system, especially if one’s region has no bearing on one’s beer preferences. Product ratings are not randomly distributed across users and therefore beer similarity scores are partly based on factors that are not related to qualities of the beers themselves.</p>
-<p>Still, I’m encouraged by the list of beers similar to Sculpin. In fact, these are some of my favorite beers. Just to show that I’m not cherry picking, I’ll randomly select a beer from my list of beers and check its similarity scores for face validity.</p>
+<p>This tibble shows the 500 most similar beers to Sculpin sorted in decreasing order of their similarity. The list consists mainly of American IPAs, which is what Sculpin is. I can attest to the similarity of some of the beers on this list (Bear Republic’s Racer 5, Stone’s Enjoy By) to Sculpin. It’s also worth noting that many of the beers on this list come from Californian breweries, which is where Sculpin is brewed. This may reflect a tendency of reviewers to be more familiar with beers in their own region. This sort of regional clustering presents problems for the validity of the recommendation system, especially if one’s region has little bearing on one’s beer preferences. Product ratings are not randomly distributed across users and therefore beer similarity scores are likely partially based on factors that are unrelated to qualities of the beers themselves. Still, I’m encouraged by this list. In fact, these are some of my favorite beers. Just to show that I’m not cherry picking, I’ll randomly select a beer from my list of beers and check its similarity scores for face validity.</p>
 <pre class="r"><code>set.seed(123)
 item_similarity_matrix[base::sample(nrow(beer_key), 1)]</code></pre>
 <pre><code>## [[1]]
@@ -264,8 +257,8 @@ item_similarity_matrix[base::sample(nrow(beer_key), 1)]</code></pre>
 ##  9 Pipeworks Brewing Company Kwingston&#39;s Kitty Cat-ina         2548 0.949
 ## 10 Pipeworks Brewing Company Beejay&#39;s Weirdo Brown Ale        22642 0.949
 ## # … with 490 more rows</code></pre>
-<p>Here we have a Saison from a smaller Chicago-based brewery. Given that reviewers of this beer were way more likely to review other beers from Pipeworks, most of the top beers on this list are Pipeworks beers. The two non-Pipeworks beers in the top ten come from other breweries based in Illinois. Again, this is a common issue with recommendation systems. For instance, I’ve been recommended movies on Netflix that have cast members in common with movies I’ve rated highly. Some people like receiving recommendations for movies with their favorite actors, just as some people may wish to receive recommendations for other beers from their favorite breweries. However, for me an ideal recommendation system would estimate similarity by the most intrinsic features of a product (in our case, beer taste). It may be fair to conclude from these preliminary validity checks that this recommendation system will work better for beers from more established breweries that distribute beers on a national scale. For these beers, patterns in user ratings are more likely to be based on beer taste and less likely to be based on brewery and region.</p>
-<p>For the last part of this post, I will write a function that takes a 24542 (the number of beers) length vector and returns a list of beer recommendations. This vector will have 0’s for beers that the user has not rated and values between 1 and 5 for beers that the user has rated. Let’s return to our sparse matrix and sample a user who has reviewed a lot of beers. I happen to know that the user with id 3 has rated a few thousand beers, so we’ll use this user as our example user.</p>
+<p>Here we have a Saison from Pipeworks, a smaller Chicago-based brewery. Given that reviewers of this beer were way more likely to review other beers from Pipeworks, most of the top beers on this list are Pipeworks beers. The two non-Pipeworks beers in the top ten come from other breweries based in Illinois. This isn’t ideal; I want the recommendation system to judge similarity by how beers taste rather than where they are located. We can conclude from these preliminary validity checks that this recommendation system will work better for beers from more established breweries that distribute on a national scale. For these beers, patterns in user ratings are more likely to be based on beer taste and less likely to be based on brewery and region.</p>
+<p>I am now going to write a function that takes a set of beer ratings returns a list of beer recommendations. Let’s return to our sparse matrix and sample a user who has reviewed a lot of beers. I happen to know that the user with id 3 has rated a few thousand beers, so we’ll use this user as our example user.</p>
 <pre class="r"><code># Creating a 24542-length vector of beer ratings for user 3
 example_user &lt;- beer_sparse[3,]</code></pre>
 <p>To predict beer ratings based on a user’s past ratings, I use the following formula:</p>
@@ -273,26 +266,25 @@ example_user &lt;- beer_sparse[3,]</code></pre>
 <img src="/post/2019-07-16-building-a-recommendation-system-with-beer-data_files/Screen%20Shot%202019-07-19%20at%205.05.07%20PM.png" />
 
 </div>
-<p>Following this equation, the predicted rating of a given beer is just the average of the ratings of similar beers weighted by their similarity scores. My function will recommend a set of beers based on which beers have the highest predicted ratings according to this equation.</p>
-<p>The first thing that I need to is find the beer ids of the beers that the user has already rated. This is easy - I just search the vector for non-zero elements.</p>
+<p>Following this equation, the predicted rating of a given beer is the average of the ratings of similar beers weighted by their similarity scores. My function will recommend a set of beers based on which beers have the highest predicted ratings according to this equation. The first thing that I need to is find the beer ids of the beers that the user has already rated.</p>
 <pre class="r"><code>rated_beer_ids &lt;- which(example_user != 0)</code></pre>
-<p>Next, I pull the similarity scores of all beers that are similar to at least one beer that the user has rated. For each of these beers I only extract similarity scores between the beer and the rated beers. I use the map function from the purrr package to do this.</p>
+<p>Next, I extract similarity scores between each of the beers the user has rated and similar beers. I use the map function from the purrr package to do this.</p>
 <pre class="r"><code>sim_scores &lt;- map(item_similarity_matrix, ~.x %&gt;%
                     filter(id %in% rated_beer_ids) %&gt;%
                     .[[&quot;score&quot;]])</code></pre>
-<p>Now I want to create a vector with candidate beers to recommend to the user. These are beers that are similar to at least 5 of the beers that the user has rated. Why 5 and not 1? My thinking here is that my equation would give beers with one similar beer to a rated beer a predicted rating of that beer’s rating. I am more confidence in a predicted rating that is based on a weighted average of several rated beers, rather than one or a few weighted beers. I may adjust this parameter in the future to see how it affects model validity.</p>
+<p>Now I want to identify a set of “candidate beers”. These are beers that might be recommended to the user. I choose to add beers that are similar to least 5 of the beers that the user has rated. Why 5 and not 1? My thinking here is that my equation would give beers with one similar beer to a rated beer a predicted rating of that beer’s rating. I am more confident in a predicted rating that is based on a weighted average of several rated beers, rather than one or a few weighted beers.</p>
 <pre class="r"><code>candidate_beer_ids &lt;- which(sim_scores %&gt;% map(., ~length(.x) &gt;= 5) %&gt;% unlist)</code></pre>
-<p>This vector, candidate_beer_ids, gives the positions of beers that have at least 10 similar beers to beers the example user has rated. It is likely that some of these include beers the user has rated. We don’t want to predict beer ratings for rated beers, so I filter these.</p>
+<p>This vector, candidate_beer_ids, gives the positions of beers that have at least 5 similar beers to beers the example user has rated. It is likely that some of these include beers the user has rated. We don’t want to predict beer ratings for beers that have already been rated, so I filter these.</p>
 <pre class="r"><code>candidate_beer_ids &lt;- candidate_beer_ids[!(candidate_beer_ids %in%
                                              rated_beer_ids)]
 
 # Number of candidate beers
 length(candidate_beer_ids)</code></pre>
 <pre><code>## [1] 19149</code></pre>
-<p>I am now ready to compute predicted ratings for the candidate beers (i.e. beers that have some degree of similarity to at least 5 beers that the user has rated). I start by calculating the denominators of these predicted ratings. For each candidate beer, is this the sum of similarity scores to beers the user has rated.</p>
+<p>I am now ready to compute predicted ratings for the candidate beers. I start by calculating the denominators of these predicted ratings. For each candidate beer, this is the sum of similarity scores between that beer and beers the user has rated.</p>
 <pre class="r"><code>denoms &lt;- map(item_similarity_matrix[candidate_beer_ids], ~.x %&gt;%
                 filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]] %&gt;% sum)</code></pre>
-<p>The numerators of these predicted ratings are the products of similarity scores and ratings of beers the user has rated. I use the map function to create two lists - one of vectors of similarity scores for each candidate beer and one of vectors of ratings of similar beers to each candidate beer. Finally, I use purrr’s map2 function, which takes two lists as inputs, and take sums of the dot products of these lists of vectors. The resulting list contains the numerators of predicted ratings for each candidate beer.</p>
+<p>On to the numerators. I get these by taking the the products of similarity scores and ratings of beers the user has rated.</p>
 <pre class="r"><code># List of similarity scores
 sims_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
                  ~.x %&gt;% filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]])
@@ -302,10 +294,11 @@ ratings_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
                      ~example_user[.x %&gt;% filter(id %in% rated_beer_ids) %&gt;%
                                      .[[&quot;id&quot;]]])
 
+# Numerators
 nums &lt;- map2(sims_vecs, ratings_vecs, ~sum(.x*.y))</code></pre>
 <p>The last step is to divide each element in the numerators list by its corresponding denominator from the denominators list to get predicted ratings. I once again use the map2 function for this.</p>
 <pre class="r"><code>predicted_ratings &lt;- map2(nums, denoms, ~.x/.y)</code></pre>
-<p>Now that I have a list of predicted ratings for candidate beers I can create a tibble that displays beer names and their predicted ratings. I sort this in descending order of predicted rating and sample the first few rows to see which beers my recommendation system would recommend this user.</p>
+<p>Now that I have a list of predicted ratings for candidate beers I can sort beers by their predicted ratings and sample the first few rows to see which beers my recommendation system would recommend this user.</p>
 <pre class="r"><code>pred_ratings_tbl &lt;- tibble(beer_full = beer_key %&gt;%
                           filter(id %in% candidate_beer_ids) %&gt;% .[[&quot;beer_full&quot;]],
                           pred_rating = predicted_ratings %&gt;% unlist) %&gt;%
@@ -320,7 +313,7 @@ head(pred_ratings_tbl)</code></pre>
 ## 4 Benchtop Brewing Company Proven Theory        4.25
 ## 5 Highland Brewing Daycation                    4.25
 ## 6 SingleCut Beersmiths KT66 IPL                 4.24</code></pre>
-<p>The top-six recommended beers for this user include 2 American Imperial IPAs, 2 American IPAs, a Belgian pale ale, and an IPL (India Pale Lager). Apparently the user has a preference for IPAs. These beers are geographically distributed, although many of them are in New England. I could check if the user is from New England; this information is in the full data. Now let’s check the face validity of these recommendations. I’m going to pull a list of some of the top beers that this user has rated.</p>
+<p>The top-six recommended beers for this user include 2 American Imperial IPAs, 2 American IPAs, a Belgian pale ale, and an IPL (India Pale Lager). Apparently the user has a preference for IPAs. The breweries that make these beerrs are geographically dispersed, which suggests that the location of breweries of beers the user has rated did not influence the results. Now let’s check the face validity of these recommendations. I’m going to pull a list of some of the top beers that this user has rated.</p>
 <pre class="r"><code>tibble(beer_full = beer_key[which(example_user != 0),] %&gt;% .[[&quot;beer_full&quot;]],
        rating = example_user[which(example_user != 0)]) %&gt;%
        arrange(desc(rating)) %&gt;% head</code></pre>
@@ -333,8 +326,8 @@ head(pred_ratings_tbl)</code></pre>
 ## 4 Roscoe&#39;s Hop House Pale Ale                                 5
 ## 5 Firestone Walker Brewing Co. Double Double Barrel Ale       5
 ## 6 Green Flash Brewing Co. Spanish Trampoline                  5</code></pre>
-<p>These ratings make sense given the user’s recommended beers. Many of these beers are American IPAs, and some of them are American Imperial IPAs. They also come from a geographically-distributed set of breweries. We don’t see any sign of clustering in New England from this short list; that the recommended beers are disproportionately from New England could be a sign that the highest rated IPA are from New England, or it could be a coincidence. Of course we could test this by looking at a longer list of this user’s favorite beers.</p>
-<p>Instead, I encourage you to try this recommendation system on your own set of beer ratings. The function below contains the code for computing predicted beer ratings. Enter a vector of beer ratings and the function will return six recommendations. To create a vector of beer ratings, first create a 24542-length vector of 0’s. Then, search beer_key to find the position of the beer you want to rate. I did this with Sculpin above. Enter your rating in the vector of 0’s at the appropriate position. When you’ve created your vector of beer ratings, enter it into the function. One last thing - while the recommendation system discussed above only recommended beers with at least 5 similar beers to beers that the user rated, this function has a default of 3 similarity beers. This is the second argument of the function, similarity_cutoff. To change this default, simply enter a number other than 3 as the default.</p>
+<p>Many of this user’s favorite beers are American IPAs, and some of them are American Imperial IPAs. They also come from a geographically-distributed set of breweries. These are encouraging results.</p>
+<p>I encourage you to try this recommendation system on your own set of beer ratings. The function below contains the code for computing predicted beer ratings. Enter a vector of beer ratings and the function will return six recommendations. To create a vector of beer ratings, first create a 24542-length vector of 0’s. Then, search the beer key (called “beer_key”) to find the index of the beer you want to rate, just as I did with Sculpin above. Enter your rating in the vector of 0’s at the appropriate position. When you’ve created a vector of beer ratings, enter it into the function. One last thing - while the recommendation system discussed above only recommended beers with at least 5 similar beers to beers that the user rated, the function below has a default of 3 similar beers. This is the second argument of the function, “similarity_cutoff”. To change this default, simply enter a number other than 3 as the second argument.</p>
 <pre class="r"><code>recommend_beers &lt;- function(input_vec, similarity_cutoff = 3){
 
 # Replace missing values with 0
@@ -397,7 +390,7 @@ recommend_beers(beer_sparse[base::sample(num_users, 1),])</code></pre>
 ## 4 Coors Brewing Company (Molson-Coors) Blue Moon Valencia Ambe…        4.44
 ## 5 Coors Brewing Company (Molson-Coors) Blue Moon Farmhouse Red…        4.42
 ## 6 Coors Brewing Company (Molson-Coors) Blue Moon Caramel Apple…        4.41</code></pre>
-<p>It worked!</p>
+<p>It worked! I question this beer drinker’s taste, but that’s another story.</p>
 <p>If you don’t want to bother running this code on your computer, I’ve created an app that produces recommendations and updates them as you add beer ratings. Navigate over to the Shiny section of my website to check it out, and thanks for reading!</p>
 
 
@@ -418,7 +411,7 @@ src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM
 
         		<footer>
 			<span>
-			&copy; <time datetime="2019-07-30 10:01:14.214716 -0400 EDT m=&#43;7.324419741">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
+			&copy; <time datetime="2019-07-30 18:48:03.68818 -0400 EDT m=&#43;6.950143083">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
 			</span>
 		</footer>
 
