@@ -54,6 +54,8 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 
 
 
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+<link href="/rmarkdown-libs/bsTable/bootstrapTable.min.css" rel="stylesheet" />
 
 
 <p>Since it was founded in 2005, Reddit has developed into a popular place for sharing opinions and ideas, rating web content, and aggregating news on the internet. Reddit is organized into thousands of user-made communities, called subreddits, which cover a broad range of subjects, including politics, sports, technology, personal hobbies, and self-improvement, to name a few. Given that Reddit is structured in this way, it is natural to think of Reddit as a population of users organized into many overlapping communities (subreddits). In other words, it makes sense to conceptualize Reddit as having an underlying social structure. Uncovering this structure may provide insights into the social organization of internet culture more generally.</p>
@@ -248,9 +250,9 @@ example_user_network</code></pre>
 ##  3 --Caius--  summonerscho… leagueoflegen…    79     3   124   142   3.48e3
 ##  4 --Gianni-- pics          videos          5043  5042   126   138   5.09e7
 ##  5 --Gianni-- pics          AskReddit       5043 15261   126   125   2.06e8
-##  6 --Gianni-- gaming        AskReddit      10158 15261   131   125   3.23e8
-##  7 --Gianni-- gaming        videos         10158  5042   131   138   1.16e8
-##  8 --Gianni-- movies        videos         20348  5042   124   138   3.22e8
+##  6 --Gianni-- movies        videos         20348  5042   124   138   3.22e8
+##  7 --Gianni-- gaming        AskReddit      10158 15261   131   125   3.23e8
+##  8 --Gianni-- gaming        videos         10158  5042   131   138   1.16e8
 ##  9 --Gianni-- movies        AskReddit      20348 15261   124   125   6.34e8
 ## 10 --Gianni-- gaming        movies         10158 20348   131   124   4.65e8
 ## # … with more rows</code></pre>
@@ -345,9 +347,9 @@ reddit_edgelist</code></pre>
 <p>We now have our final edgelist. There are about 56,000 thousand rows in the data, though most edges have very small weights. Next, I use the igraph package to turn this dataframe into a graph object. Graph objects can be analyzed using igraph’s clustering algorithms. Let’s have a look at what this graph object looks like.</p>
 <pre class="r"><code>reddit_graph &lt;- graph_from_data_frame(reddit_edgelist, directed = FALSE)
 reddit_graph</code></pre>
-<pre><code>## IGRAPH 1f7cd6b UNW- 5561 56257 --
+<pre><code>## IGRAPH e3840e5 UNW- 5561 56257 --
 ## + attr: name (v/c), weight (e/n)
-## + edges from 1f7cd6b (vertex names):
+## + edges from e3840e5 (vertex names):
 ##  [1] 1--12735 1--10158 1--2601  1--17856 1--22900 1--25542 1--15260
 ##  [8] 1--20340 2--2770  2--15261 2--18156 2--20378 2--41    2--22888
 ## [15] 2--28115 2--10172 2--5043  2--28408 2--2553  2--2836  2--28096
@@ -397,21 +399,115 @@ subreddit_by_comm</code></pre>
 <p>Now let’s store a vector of id’s in order of community importance.</p>
 <pre class="r"><code>comm_ids &lt;- subreddit_by_comm %&gt;% group_by(comm) %&gt;% slice(1) %&gt;% arrange(desc(comm_imp)) %&gt;% .[[&quot;comm&quot;]]</code></pre>
 <p>Let’s have a look at the most important community arranged by importance of subreddits within that community.</p>
-<pre class="r"><code>subreddit_by_comm %&gt;% filter(comm == comm_ids[1]) %&gt;% arrange(desc(imp))</code></pre>
-<pre><code>## # A tibble: 2,209 x 5
-##    subreddit        id  comm    imp comm_imp
-##    &lt;chr&gt;         &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;    &lt;dbl&gt;
-##  1 funny         28096   154 107894  1364159
-##  2 AskReddit     15261   154 101239  1364159
-##  3 AdviceAnimals 20340   154  81208  1364159
-##  4 pics           5043   154  73119  1364159
-##  5 gaming        10158   154  51314  1364159
-##  6 videos         5042   154  47795  1364159
-##  7 aww           17856   154  47378  1364159
-##  8 WTF            2526   154  37311  1364159
-##  9 Music         22888   154  31702  1364159
-## 10 todayilearned  5055   154  26666  1364159
-## # … with 2,199 more rows</code></pre>
+<pre class="r"><code>top_comms &lt;- list()
+for(i in 1:10){
+top_comms[[i]] &lt;- subreddit_by_comm %&gt;% filter(comm == comm_ids[i]) %&gt;% arrange(desc(imp)) %&gt;% .[[&quot;subreddit&quot;]] %&gt;% .[1:10]
+}
+
+comm_tbl &lt;- tibble(Community = 1:10,
+                   Subreddits = map(top_comms, ~paste(.x, collapse = &quot; &quot;)) %&gt;% unlist)</code></pre>
+<pre class="r"><code>options(kableExtra.html.bsTable = TRUE)
+
+comm_tbl %&gt;%
+kable(&quot;html&quot;) %&gt;%
+  kable_styling(&quot;hover&quot;, full_width = F) %&gt;%
+  column_spec(1, bold = T, border_right = T) %&gt;%
+  column_spec(2, width = &quot;30em&quot;)</code></pre>
+<table class="table table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:right;">
+Community
+</th>
+<th style="text-align:left;">
+Subreddits
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+1
+</td>
+<td style="text-align:left;width: 30em; ">
+funny AskReddit AdviceAnimals pics gaming videos aww WTF Music todayilearned
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+2
+</td>
+<td style="text-align:left;width: 30em; ">
+DotA2 tf2 SteamGameSwap starcraft tf2trade Dota2Trade GiftofGames SteamTradingCards Steam vinyl
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+3
+</td>
+<td style="text-align:left;width: 30em; ">
+electronicmusic dubstep WeAreTheMusicMakers futurebeats trap edmproduction electrohouse EDM punk ThisIsOurMusic
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+4
+</td>
+<td style="text-align:left;width: 30em; ">
+hockey fantasybaseball nhl Austin DetroitRedWings sanfrancisco houston leafs BostonBruins mlb
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+5
+</td>
+<td style="text-align:left;width: 30em; ">
+cars motorcycles Autos sysadmin carporn formula1 Jeep subaru Cartalk techsupportgore
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+6
+</td>
+<td style="text-align:left;width: 30em; ">
+web_design Entrepreneur programming webdev Design windowsphone SEO forhire startups socialmedia
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+7
+</td>
+<td style="text-align:left;width: 30em; ">
+itookapicture EarthPorn AbandonedPorn HistoryPorn photocritique CityPorn MapPorn AnimalPorn SkyPorn Astronomy
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+8
+</td>
+<td style="text-align:left;width: 30em; ">
+wow darksouls Diablo Neverwinter Guildwars2 runescape diablo3 2007scape swtor Smite
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+9
+</td>
+<td style="text-align:left;width: 30em; ">
+blackops2 battlefield3 dayz Eve Planetside aviation airsoft WorldofTanks Warframe CallOfDuty
+</td>
+</tr>
+<tr>
+<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+10
+</td>
+<td style="text-align:left;width: 30em; ">
+soccer Seattle Fifa13 Portland MLS Gunners reddevils chelseafc football LiverpoolFC
+</td>
+</tr>
+</tbody>
+</table>
+<p>ARUHGSG</p>
 <p>These are literally the 10 most popular subreddits on Reddit. It’s the same 10 subreddits that I showed earlier. Although the subreddits on this list are somewhat similar - about half of them are for distributing memes - we see a lot of subreddits that don’t have any obvious relevance to each other (Music and AdviceAnimals, for instance). Even more importantly, notice that this tibble consists of ~2,200 rows. That is almost half of our dataset. What went wrong here? One possibility is that this community represents a residual category, subreddits that traverse multiple communities. While the Louvain algorithm forces nodes into single groups, there’s no reason to assume that nodes belong to one particular community. It’s likely that some of these subreddits have users that span many communities on Reddit. In this post, I have opted to go with the Louvain algorithm for practical reasons. Stanford’s Network Analysis Project has powerful tools for implementing fuzzy clustering for large networks. Unfortunately, these tools have yet to be implemented in R, though they are available in Python (<a href="http://snap.stanford.edu/snappy/index.html">snap.stanford.edu/snappy/index.html</a>). I may attempt to apply these tools to the problem of Reddit community detection in a subsequent post.</p>
 <p>A second more sanguine possibility is that these subreddits do comprise a community - mainstream Reddit. It’s possible that Reddit consists of large core of subreddits devoted to memes, gaming, and advice, and a much smaller periphery dedicated to the discussion of specific topics (like resumes). My suspicion is that what’s going on here is some combination of these two possibilities. In other words, this group of subreddits is a mix of core subreddits and other subreddits than don’t fit into any of the other communities.</p>
 <p>Let’s have a lot at the second biggest community that the algorithm identified.</p>
@@ -653,7 +749,7 @@ src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM
 
         		<footer>
 			<span>
-			&copy; <time datetime="2019-07-26 17:02:43.68853 -0400 EDT m=&#43;6.801325768">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
+			&copy; <time datetime="2019-07-31 16:57:41.738949 -0400 EDT m=&#43;6.727644221">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
 			</span>
 		</footer>
 
