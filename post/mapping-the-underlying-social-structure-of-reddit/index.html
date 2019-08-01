@@ -248,13 +248,13 @@ example_user_network</code></pre>
 ##  1 --5Dhere   depression    awakened        7644 29936   135   135   7.06e8
 ##  2 --Adam--   AskReddit     techsupport    15261 28113   135   142   9.41e8
 ##  3 --Caius--  summonerscho… leagueoflegen…    79     3   124   142   3.48e3
-##  4 --Gianni-- pics          videos          5043  5042   126   138   5.09e7
-##  5 --Gianni-- pics          AskReddit       5043 15261   126   125   2.06e8
-##  6 --Gianni-- movies        videos         20348  5042   124   138   3.22e8
-##  7 --Gianni-- gaming        AskReddit      10158 15261   131   125   3.23e8
-##  8 --Gianni-- gaming        videos         10158  5042   131   138   1.16e8
-##  9 --Gianni-- movies        AskReddit      20348 15261   124   125   6.34e8
-## 10 --Gianni-- gaming        movies         10158 20348   131   124   4.65e8
+##  4 --Gianni-- gaming        pics           10158  5043   131   126   1.16e8
+##  5 --Gianni-- movies        pics           20348  5043   124   126   3.22e8
+##  6 --Gianni-- pics          AskReddit       5043 15261   126   125   2.06e8
+##  7 --Gianni-- movies        AskReddit      20348 15261   124   125   6.34e8
+##  8 --Gianni-- gaming        movies         10158 20348   131   124   4.65e8
+##  9 --Gianni-- pics          videos          5043  5042   126   138   5.09e7
+## 10 --Gianni-- gaming        AskReddit      10158 15261   131   125   3.23e8
 ## # … with more rows</code></pre>
 <pre class="r"><code>reddit_network_data %&gt;% sdf_nrow</code></pre>
 <pre><code>## [1] 1685921</code></pre>
@@ -347,9 +347,9 @@ reddit_edgelist</code></pre>
 <p>We now have our final edgelist. There are about 56,000 thousand rows in the data, though most edges have very small weights. Next, I use the igraph package to turn this dataframe into a graph object. Graph objects can be analyzed using igraph’s clustering algorithms. Let’s have a look at what this graph object looks like.</p>
 <pre class="r"><code>reddit_graph &lt;- graph_from_data_frame(reddit_edgelist, directed = FALSE)
 reddit_graph</code></pre>
-<pre><code>## IGRAPH e3840e5 UNW- 5561 56257 --
+<pre><code>## IGRAPH f4a3466 UNW- 5561 56257 --
 ## + attr: name (v/c), weight (e/n)
-## + edges from e3840e5 (vertex names):
+## + edges from f4a3466 (vertex names):
 ##  [1] 1--12735 1--10158 1--2601  1--17856 1--22900 1--25542 1--15260
 ##  [8] 1--20340 2--2770  2--15261 2--18156 2--20378 2--41    2--22888
 ## [15] 2--28115 2--10172 2--5043  2--28408 2--2553  2--2836  2--28096
@@ -411,7 +411,7 @@ comm_tbl &lt;- tibble(Community = 1:10,
 comm_tbl %&gt;%
 kable(&quot;html&quot;) %&gt;%
   kable_styling(&quot;hover&quot;, full_width = F) %&gt;%
-  column_spec(1, bold = T, border_right = T) %&gt;%
+  column_spec(1, bold = T, border_right = &quot;1px solid #ddd;&quot;) %&gt;%
   column_spec(2, width = &quot;30em&quot;)</code></pre>
 <table class="table table-hover" style="width: auto !important; margin-left: auto; margin-right: auto;">
 <thead>
@@ -426,7 +426,7 @@ Subreddits
 </thead>
 <tbody>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 1
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -434,7 +434,7 @@ funny AskReddit AdviceAnimals pics gaming videos aww WTF Music todayilearned
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 2
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -442,7 +442,7 @@ DotA2 tf2 SteamGameSwap starcraft tf2trade Dota2Trade GiftofGames SteamTradingCa
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 3
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -450,7 +450,7 @@ electronicmusic dubstep WeAreTheMusicMakers futurebeats trap edmproduction elect
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 4
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -458,7 +458,7 @@ hockey fantasybaseball nhl Austin DetroitRedWings sanfrancisco houston leafs Bos
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 5
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -466,7 +466,7 @@ cars motorcycles Autos sysadmin carporn formula1 Jeep subaru Cartalk techsupport
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 6
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -474,7 +474,7 @@ web_design Entrepreneur programming webdev Design windowsphone SEO forhire start
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 7
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -482,7 +482,7 @@ itookapicture EarthPorn AbandonedPorn HistoryPorn photocritique CityPorn MapPorn
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 8
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -490,7 +490,7 @@ wow darksouls Diablo Neverwinter Guildwars2 runescape diablo3 2007scape swtor Sm
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 9
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -498,7 +498,7 @@ blackops2 battlefield3 dayz Eve Planetside aviation airsoft WorldofTanks Warfram
 </td>
 </tr>
 <tr>
-<td style="text-align:right;font-weight: bold;border-right:1px solid;">
+<td style="text-align:right;font-weight: bold;border-right:1px solid #ddd;;">
 10
 </td>
 <td style="text-align:left;width: 30em; ">
@@ -749,7 +749,7 @@ src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM
 
         		<footer>
 			<span>
-			&copy; <time datetime="2019-07-31 16:57:41.738949 -0400 EDT m=&#43;6.727644221">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
+			&copy; <time datetime="2019-08-01 10:18:18.636622 -0400 EDT m=&#43;8.203031072">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
 			</span>
 		</footer>
 
