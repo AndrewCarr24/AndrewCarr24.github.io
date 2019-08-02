@@ -8,15 +8,15 @@
 				Mapping the Underlying Social Structure of Reddit &middot; Data Science Diarist
 		</title>
 
-		
+
   		<link rel="stylesheet" href="/css/style.css">
 		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
-		
+
 		<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
 		<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
 		<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 
-		
+
 		<link href="" rel="alternate" type="application/rss+xml" title="Data Science Diarist" />
 	</head>
 
@@ -39,7 +39,7 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js">
 </script> <script>hljs.initHighlightingOnLoad();</script>
 
-        
+
 
 <main>
 	<div class="post">
@@ -52,9 +52,9 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 		<h1 class="post-title">Mapping the Underlying Social Structure of Reddit</h1>
 <div class="post-line"></div>
 
-		
 
-		
+
+
 <script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
 <link href="/rmarkdown-libs/bsTable/bootstrapTable.min.css" rel="stylesheet" />
 
@@ -67,23 +67,23 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 <p>The data for this post come from an online repository of subreddit submissions and comments that is generously hosted by data scientist Jason Baumgartner. If you plan to download a lot of data from this repository, I implore you to donate a bit of money to keep Baumgartner’s database up and running (<a href="https://pushshift.io/donations/">pushshift.io/donations/</a>).</p>
 <p>Here’s the link to the Reddit submissions data - <a href="http://files.pushshift.io/reddit/submissions/">files.pushshift.io/reddit/submissions/</a>. Each of these files has all Reddit submissions for a given month between June 2005 and May 2019. Files are JSON objects stored in various compression formats that range between .017Mb and 5.77Gb in size. Let’s download something in the middle of this range - a 710Mb file for all Reddit submissions for May 2013. The file is called RS_2013-05.bz2. You can double-click this file to unzip it, or you can use the following command in the Terminal: <code>bzip2 -d RS_2013-05.bz2</code>. The file will take a couple of minutes to unzip. Make sure you have enough room to store the unzipped file on your computer - it’s 4.51Gb. Once I have unzipped this file, I load the relevant packages, read the first line of data from the unzipped file, and look at the variable names.</p>
 <pre class="r"><code>read_lines(&quot;RS_2013-05&quot;, n_max = 1) %&gt;% fromJSON() %&gt;% names</code></pre>
-<pre><code>##  [1] &quot;edited&quot;                 &quot;title&quot;                 
-##  [3] &quot;thumbnail&quot;              &quot;retrieved_on&quot;          
-##  [5] &quot;mod_reports&quot;            &quot;selftext_html&quot;         
-##  [7] &quot;link_flair_css_class&quot;   &quot;downs&quot;                 
-##  [9] &quot;over_18&quot;                &quot;secure_media&quot;          
+<pre><code>##  [1] &quot;edited&quot;                 &quot;title&quot;
+##  [3] &quot;thumbnail&quot;              &quot;retrieved_on&quot;
+##  [5] &quot;mod_reports&quot;            &quot;selftext_html&quot;
+##  [7] &quot;link_flair_css_class&quot;   &quot;downs&quot;
+##  [9] &quot;over_18&quot;                &quot;secure_media&quot;
 ## [11] &quot;url&quot;                    &quot;author_flair_css_class&quot;
-## [13] &quot;media&quot;                  &quot;subreddit&quot;             
-## [15] &quot;author&quot;                 &quot;user_reports&quot;          
-## [17] &quot;domain&quot;                 &quot;created_utc&quot;           
-## [19] &quot;stickied&quot;               &quot;secure_media_embed&quot;    
-## [21] &quot;media_embed&quot;            &quot;ups&quot;                   
-## [23] &quot;distinguished&quot;          &quot;selftext&quot;              
-## [25] &quot;num_comments&quot;           &quot;banned_by&quot;             
-## [27] &quot;score&quot;                  &quot;report_reasons&quot;        
-## [29] &quot;id&quot;                     &quot;gilded&quot;                
-## [31] &quot;is_self&quot;                &quot;subreddit_id&quot;          
-## [33] &quot;link_flair_text&quot;        &quot;permalink&quot;             
+## [13] &quot;media&quot;                  &quot;subreddit&quot;
+## [15] &quot;author&quot;                 &quot;user_reports&quot;
+## [17] &quot;domain&quot;                 &quot;created_utc&quot;
+## [19] &quot;stickied&quot;               &quot;secure_media_embed&quot;
+## [21] &quot;media_embed&quot;            &quot;ups&quot;
+## [23] &quot;distinguished&quot;          &quot;selftext&quot;
+## [25] &quot;num_comments&quot;           &quot;banned_by&quot;
+## [27] &quot;score&quot;                  &quot;report_reasons&quot;
+## [29] &quot;id&quot;                     &quot;gilded&quot;
+## [31] &quot;is_self&quot;                &quot;subreddit_id&quot;
+## [33] &quot;link_flair_text&quot;        &quot;permalink&quot;
 ## [35] &quot;author_flair_text&quot;</code></pre>
 <p>For this project, I’m only interested in three of these variables: the user name associated with each submission (author), the subreddit to which a submission has been posted (subreddit), and the time of submission (created_utc). If we could figure out a way to extract these three pieces of information from each line of JSON we could greatly reduce the size of our data, which would allow us to store multiple months worth of information on our local machine. Jq is a command-line JSON processor that makes this possible.</p>
 <p>To install jq on a Mac, you need to make sure you have Homebrew (<a href="https://brew.sh/">brew.sh/</a>), a package manager that works in the Terminal. Once you have Homebrew, in the Terminal type <code>brew install jq</code>. We’re going to use jq to extract the variables we want from RS_2015-03 and save the result as a .csv file. To select variables with jq, we want to list the JSON field names that we want like this: <code>[.author, .created_utc, .subreddit]</code>. We want to return these as raw output (<code>-r</code>) and render this as a csv file (<code>@csv</code>). Here’s the command that does all this:</p>
@@ -96,34 +96,34 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 <h1>Analysis</h1>
 <p>Each row of our data currently represents a unique submission from a user. We want to turn this into a dataframe where each row represents a link between subreddits through a common user. One problem that arises from this kind of data manipulation is that there are many more rows in the network form of this data than there are in the current form of the data. To see this, consider a user who has submitted to 10 different subreddits. These submissions would take up ten rows of our dataframe in its current form. However, this data would be represented by 10 choose 2, or 45, rows of data in its network form. This is every combination of 2 subreddits among those to which the user has posted. This number gets exponentially larger as the number of submissions from the same user increases. For this reason, the only way to convert the data into a network form without causing R to freeze is to convert the data into a Spark dataframe. Spark is a distributed computing platform that partitions large datasets into smaller chunks and operates on these chunks in parallel. If your computer has a multicore processor, Spark allows you to work with big-ish data on you local machine. I will be using a lot of functions from the sparklyr package, which supplies dplyr backend to Spark. If you’re new to Spark and sparklyr, check out RStudio’s guide for getting started with Spark in R (<a href="https://spark.rstudio.com/">spark.rstudio.com/</a>).</p>
 <p>Once you have Spark configured, import the data into R as a Spark dataframe.</p>
-<pre class="r"><code>reddit_data &lt;- spark_read_csv(sc, &quot;parsed_json_to_csv_2013_05&quot;, 
+<pre class="r"><code>reddit_data &lt;- spark_read_csv(sc, &quot;parsed_json_to_csv_2013_05&quot;,
                               header = FALSE)</code></pre>
 <p>Let’s see what this data looks like.</p>
 <pre class="r"><code>head(reddit_data)</code></pre>
 <pre><code>## # Source: spark&lt;?&gt; [?? x 3]
-##   V1                V2 V3             
-##   &lt;chr&gt;          &lt;int&gt; &lt;chr&gt;          
-## 1 shallah   1367452799 Documentaries  
+##   V1                V2 V3
+##   &lt;chr&gt;          &lt;int&gt; &lt;chr&gt;
+## 1 shallah   1367452799 Documentaries
 ## 2 chowsers  1367452798 leagueoflegends
-## 3 [deleted] 1367452796 nosleep        
-## 4 [deleted] 1367452796 woahdude       
-## 5 [deleted] 1367452796 starcraft      
+## 3 [deleted] 1367452796 nosleep
+## 4 [deleted] 1367452796 woahdude
+## 5 [deleted] 1367452796 starcraft
 ## 6 [deleted] 1367452796 aww</code></pre>
 <p>Looks like we have lots of missing user names from deleted accounts. These rows will need to be deleted, and this could bias the results if missing accounts are unevenly distributed across subreddits (which they probably are). Let’s bracket this problem for now. Otherwise, the data look fine. Next, I make a few changes to the data - changing the column names, converting the time variable from utc time to the day of the year, and removing submissions from deleted accounts from the data. I also remove submissions from users who have posted only once - these would contribute nothing to the network data - and submissions from users who have posted 60 or more times - these users are likely bots.</p>
-<pre class="r"><code>reddit_data &lt;- reddit_data %&gt;% 
-    rename(author = V1, created_utc = V2, subreddit = V3) %&gt;% 
-    mutate(dateRestored = timestamp(created_utc + 18000)) %&gt;% 
-    mutate(day = dayofyear(dateRestored)) %&gt;% 
+<pre class="r"><code>reddit_data &lt;- reddit_data %&gt;%
+    rename(author = V1, created_utc = V2, subreddit = V3) %&gt;%
+    mutate(dateRestored = timestamp(created_utc + 18000)) %&gt;%
+    mutate(day = dayofyear(dateRestored)) %&gt;%
     filter(author != &quot;[deleted]&quot;) %&gt;% group_by(author) %&gt;% mutate(count = count()) %&gt;%
-    filter(count &lt; 60 &amp; count &gt; 1) %&gt;% 
-    ungroup() 
+    filter(count &lt; 60 &amp; count &gt; 1) %&gt;%
+    ungroup()
 
 reddit_data %&gt;% sdf_nrow</code></pre>
 <pre><code>## [1] 1640677</code></pre>
 <p>After these manipulations we’re down to 1,640,677 rows. Next, I create a key that gives a numeric id to each subreddit. I add these ids to the data, and select the variables “author”, “day”, “count”, “subreddit”, and “id” from the resulting data.</p>
 <pre class="r"><code>subreddit_key &lt;- reddit_data %&gt;% distinct(subreddit) %&gt;% sdf_with_sequential_id()
 
-reddit_data &lt;- left_join(reddit_data, subreddit_key, by = &quot;subreddit&quot;) %&gt;% 
+reddit_data &lt;- left_join(reddit_data, subreddit_key, by = &quot;subreddit&quot;) %&gt;%
   select(author, day, count, subreddit, id)
 
 head(reddit_data)</code></pre>
@@ -139,23 +139,23 @@ head(reddit_data)</code></pre>
 <p>We now have 5 variables. The count variable shows the number of times a user has posted to Reddit, and the id variable gives the subreddit’s numeric id. We are now ready to convert this data to network format. The first thing we need to do is take an inner_join of our data with itself by the “author” variable. For each user, the number of rows this returns will be the square of the number of submissions from that user. We want to filter this down to “number of submissions choose 2” rows for each user. This takes two steps. First we remove rows that link subreddits to themselves. Then we will remove duplicate rows. For instance, AskReddit-funny is a duplicate of funny-AskReddit. We would want to remove one of these.</p>
 <p>This is where our id variable will prove useful. If we can mutate the two id variables into a variable that gives a unique identifier to each subreddit pair regardless of the order of subreddits, we can filter duplicates of this identifier. We need a mathematical equation that takes two numbers and returns a unique number (i.e. a number that can only be produced from these two numbers) regardless of number order. One such equation is the Cantor Pairing Function (<a href="https://en.wikipedia.org/wiki/Pairing_function">wikipedia.org/wiki/Pairing_function</a>):</p>
 <div class="figure">
-<img src="/post/2019-07-22-mapping-the-underlying-social-structure-of-reddit_files/Screen%20Shot%202019-07-23%20at%208.21.48%20PM.png" style="width:75.0%" style="height:75.0%" />
+<img src="/post/mapping-the-underlying-social-structure-of-reddit/cantor.png" style="width:75.0%" style="height:75.0%" />
 
 </div>
 <p>Let’s define a function in R that takes a dataframe and two id variables, runs the id variables through Cantor’s pairing function and appends this to the dataframe, filters duplicate cantor ids from the dataframe, and returns the result. We’ll call this the cantor_filter.</p>
 <pre class="r"><code>cantor_filter &lt;- function(df, id, id2){
-  df %&gt;% mutate(id_pair = .5*(id + id2)*(id + id2 + 1) + pmax(id, id2)) %&gt;% group_by(author, id_pair) %&gt;% 
+  df %&gt;% mutate(id_pair = .5*(id + id2)*(id + id2 + 1) + pmax(id, id2)) %&gt;% group_by(author, id_pair) %&gt;%
     filter(row_number(id_pair) == 1) %&gt;% return()
 }</code></pre>
 <p>Next, I apply an inner_join to the Reddit data and apply the filters described above to the resulting dataframe.</p>
-<pre class="r"><code>reddit_network_data &lt;- inner_join(reddit_data, reddit_data %&gt;% 
-                        rename(day2 = day, count2 = count, 
+<pre class="r"><code>reddit_network_data &lt;- inner_join(reddit_data, reddit_data %&gt;%
+                        rename(day2 = day, count2 = count,
                         subreddit2 = subreddit, id2 = id),
-                        by = &quot;author&quot;) %&gt;% 
-           filter(subreddit != subreddit2) %&gt;% 
-           group_by(author, subreddit, subreddit2) %&gt;% 
-           filter(row_number(author) == 1) %&gt;%  
-           cantor_filter() %&gt;%  
+                        by = &quot;author&quot;) %&gt;%
+           filter(subreddit != subreddit2) %&gt;%
+           group_by(author, subreddit, subreddit2) %&gt;%
+           filter(row_number(author) == 1) %&gt;%
+           cantor_filter() %&gt;%
            select(author, subreddit, subreddit2, id, id2, day, day2, id_pair) %&gt;%
            ungroup %&gt;% arrange(author)</code></pre>
 <p>Let’s take a look at the new data.</p>
@@ -182,8 +182,8 @@ head(reddit_data)</code></pre>
 ## 10 --Gianni-- gaming        AskReddit      10158 15261   131   125   3.23e8
 ## # … with more rows</code></pre>
 <p>We now have a dataframe where each row represents a link between two subreddits through a distinct user. Many pairs of subreddits are connected by multiple users. We can think of subreddit pairs connected through more users as being more connected than subreddit pairs connected by fewer users. With this in mind, I create a “weight” variable that tallies the number of users connecting each subreddit pair and then filter the dataframe to unique pairs.</p>
-<pre class="r"><code>reddit_network_data &lt;- reddit_network_data %&gt;% group_by(id_pair) %&gt;% 
-  mutate(weight = n()) %&gt;% filter(row_number(id_pair) == 1) %&gt;% 
+<pre class="r"><code>reddit_network_data &lt;- reddit_network_data %&gt;% group_by(id_pair) %&gt;%
+  mutate(weight = n()) %&gt;% filter(row_number(id_pair) == 1) %&gt;%
   ungroup</code></pre>
 <p>Let’s have a look at the data and see how many rows it has.</p>
 <pre class="r"><code>reddit_network_data</code></pre>
@@ -212,35 +212,35 @@ head(reddit_data)</code></pre>
 <p>Our R dataframe consists of three columns: two id columns that provide information on connections between nodes and a weight column that tells us the strength of each connection. One nice thing to have would be a measure of the relative importance of each subreddit. A simple way to get this would be to count how many times each subreddit appears in the data. I compute this for each subreddit by adding the weight value in the rows where that subreddit appears. I then create a dataframe called subreddit_imp_key that lists subreddit ids by subreddit importance.</p>
 <pre class="r"><code>subreddit_imp_key &lt;- full_join(reddit_edgelist %&gt;% group_by(id) %&gt;%
                                  summarise(count = sum(weight)),
-            reddit_edgelist %&gt;% group_by(id2) %&gt;% 
-              summarise(count2 = sum(weight)), 
-            by = c(&quot;id&quot; = &quot;id2&quot;)) %&gt;% 
-            mutate(count = ifelse(is.na(count), 0, count)) %&gt;% 
-            mutate(count2 = ifelse(is.na(count2), 0, count2)) %&gt;% 
+            reddit_edgelist %&gt;% group_by(id2) %&gt;%
+              summarise(count2 = sum(weight)),
+            by = c(&quot;id&quot; = &quot;id2&quot;)) %&gt;%
+            mutate(count = ifelse(is.na(count), 0, count)) %&gt;%
+            mutate(count2 = ifelse(is.na(count2), 0, count2)) %&gt;%
             mutate(id = id, imp = count + count2) %&gt;% select(id, imp) </code></pre>
 <p>Let’s see which subreddits are the most popular on Reddit according to the subreddit importance key.</p>
 <pre class="r"><code>left_join(subreddit_imp_key, subreddit_key %&gt;% dplyr::collect(), by = &quot;id&quot;) %&gt;%
   arrange(desc(imp))</code></pre>
 <pre><code>## # A tibble: 5,561 x 3
-##       id    imp subreddit    
-##    &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;        
-##  1 28096 107894 funny        
-##  2 15261 101239 AskReddit    
+##       id    imp subreddit
+##    &lt;dbl&gt;  &lt;dbl&gt; &lt;chr&gt;
+##  1 28096 107894 funny
+##  2 15261 101239 AskReddit
 ##  3 20340  81208 AdviceAnimals
-##  4  5043  73119 pics         
-##  5 10158  51314 gaming       
-##  6  5042  47795 videos       
-##  7 17856  47378 aww          
-##  8  2526  37311 WTF          
-##  9 22888  31702 Music        
+##  4  5043  73119 pics
+##  5 10158  51314 gaming
+##  6  5042  47795 videos
+##  7 17856  47378 aww
+##  8  2526  37311 WTF
+##  9 22888  31702 Music
 ## 10  5055  26666 todayilearned
 ## # … with 5,551 more rows</code></pre>
 <p>These subreddits are mostly about memes and gaming, which are indeed two things that people commonly associate with Reddit.</p>
 <p>Next, I reweight the edge weights in reddit_edgelist by subreddit importance. The reason I do this is that the number of users connecting subreddits is partially a function of subreddit popularity. Reweighting by subreddit importance, I control for the influence of this potentially confounding variable. I want edge weights to instead track the overlap in subreddit communities.</p>
-<pre class="r"><code>reddit_edgelist &lt;- left_join(reddit_edgelist, subreddit_imp_key, 
-                             by = c(&quot;id&quot; = &quot;id&quot;)) %&gt;% 
+<pre class="r"><code>reddit_edgelist &lt;- left_join(reddit_edgelist, subreddit_imp_key,
+                             by = c(&quot;id&quot; = &quot;id&quot;)) %&gt;%
                   left_join(., subreddit_imp_key %&gt;% rename(imp2 = imp),
-                            by = c(&quot;id2&quot; = &quot;id&quot;)) %&gt;% 
+                            by = c(&quot;id2&quot; = &quot;id&quot;)) %&gt;%
   mutate(imp_fin = (imp + imp2)/2) %&gt;% mutate(weight = weight/imp_fin) %&gt;%
   select(id, id2, weight)
 
@@ -248,30 +248,30 @@ reddit_edgelist</code></pre>
 <pre><code>## # A tibble: 56,257 x 3
 ##       id   id2   weight
 ##    &lt;dbl&gt; &lt;dbl&gt;    &lt;dbl&gt;
-##  1     1 12735 0.0141  
+##  1     1 12735 0.0141
 ##  2     1 10158 0.000311
-##  3     1  2601 0.00602 
+##  3     1  2601 0.00602
 ##  4     1 17856 0.000505
 ##  5     1 22900 0.000488
-##  6     1 25542 0.0185  
-##  7     1 15260 0.00638 
+##  6     1 25542 0.0185
+##  7     1 15260 0.00638
 ##  8     1 20340 0.000320
-##  9     2  2770 0.0165  
+##  9     2  2770 0.0165
 ## 10     2 15261 0.000295
 ## # … with 56,247 more rows</code></pre>
 <p>We now have our final edgelist. There are about 56,000 thousand rows in the data, though most edges have very small weights. Next, I use the igraph package to turn this dataframe into a graph object. Graph objects can be analyzed using igraph’s clustering algorithms. Let’s have a look at what this graph object looks like.</p>
 <pre class="r"><code>reddit_graph &lt;- graph_from_data_frame(reddit_edgelist, directed = FALSE)
 reddit_graph</code></pre>
-<pre><code>## IGRAPH 53c3fb8 UNW- 5561 56257 -- 
+<pre><code>## IGRAPH 53c3fb8 UNW- 5561 56257 --
 ## + attr: name (v/c), weight (e/n)
 ## + edges from 53c3fb8 (vertex names):
 ##  [1] 1--12735 1--10158 1--2601  1--17856 1--22900 1--25542 1--15260
 ##  [8] 1--20340 2--2770  2--15261 2--18156 2--20378 2--41    2--22888
 ## [15] 2--28115 2--10172 2--5043  2--28408 2--2553  2--2836  2--28096
-## [22] 2--23217 2--17896 2--67    2--23127 2--2530  2--2738  2--7610 
+## [22] 2--23217 2--17896 2--67    2--23127 2--2530  2--2738  2--7610
 ## [29] 2--20544 2--25566 2--3     2--7     2--7603  2--12931 2--17860
 ## [36] 2--6     2--2526  2--5055  2--18253 2--22996 2--25545 2--28189
-## [43] 2--10394 2--18234 2--23062 2--25573 3--264   3--2599  3--5196 
+## [43] 2--10394 2--18234 2--23062 2--25573 3--264   3--2599  3--5196
 ## [50] 3--7585  3--10166 3--10215 3--12959 3--15293 3--20377 3--20427
 ## + ... omitted several edges</code></pre>
 <p>Here we have a list of all of the edges from the dataframe, represented as subreddit ids connected by “–”. We can now use a clustering algorithm to analyze the community structure that underlies this subreddit network. The clustering algorithm I choose to use here is the Louvain algorithm. This algorithm takes a network and groups its nodes into different communities in a way that maximizes the modularity of the resulting network. Networks with high modularity consist of nodes that are grouped in such a way that nodes are densely connected within node groups and sparsely connected between node groups. By maximizing modularity, the Louvain algorithm finds a grouping of nodes that maximizes the number of within-group ties and minimizes the number of between-group ties.</p>
@@ -281,17 +281,17 @@ reddit_graph</code></pre>
 subreddit_by_comm &lt;- tibble(
   # Using map from purrr to extract subreddit ids from reddit_communities
   id = map(reddit_communities[], as.numeric) %&gt;% unlist,
-  # Creating a community ids column and using rep function with map to populate 
-  # column with community ids created by 
+  # Creating a community ids column and using rep function with map to populate
+  # column with community ids created by
   # Louvain alg
   comm = rep(reddit_communities[] %&gt;%
                names, map(reddit_communities[], length) %&gt;% unlist) %&gt;%
-               as.numeric) %&gt;% 
-  # Adding subreddit names  
-  left_join(., subreddit_key %&gt;% dplyr::collect(), by = &quot;id&quot;) %&gt;% 
+               as.numeric) %&gt;%
+  # Adding subreddit names
+  left_join(., subreddit_key %&gt;% dplyr::collect(), by = &quot;id&quot;) %&gt;%
   # Keeping subreddit name, subreddit id, community id
-  select(subreddit, id, comm) %&gt;% 
-  # Adding subreddit  importance  
+  select(subreddit, id, comm) %&gt;%
+  # Adding subreddit  importance
   left_join(., subreddit_imp_key, by = &quot;id&quot;)</code></pre>
 <p>Next, I calculate community importance by summing the subreddit importance scores of the subreddits in each community.</p>
 <pre class="r"><code>subreddit_by_comm &lt;- subreddit_by_comm %&gt;% group_by(comm) %&gt;% mutate(comm_imp = sum(imp)) %&gt;% ungroup </code></pre>
@@ -303,12 +303,12 @@ for(i in 1:10){
 top_comms[[i]] &lt;- subreddit_by_comm %&gt;% filter(comm == comm_ids[i]) %&gt;% arrange(desc(imp)) %&gt;% .[[&quot;subreddit&quot;]] %&gt;% .[1:10]
 }
 
-comm_tbl &lt;- tibble(Community = 1:10, 
+comm_tbl &lt;- tibble(Community = 1:10,
                    Subreddits = map(top_comms, ~paste(.x, collapse = &quot; &quot;)) %&gt;% unlist)</code></pre>
 <p>Let’s have a look at the 10 largest subreddits in each of the 10 largest communities. These are in descending order of importance.</p>
 <pre class="r"><code>options(kableExtra.html.bsTable = TRUE)
 
-comm_tbl %&gt;% 
+comm_tbl %&gt;%
 kable(&quot;html&quot;) %&gt;%
   kable_styling(&quot;hover&quot;, full_width = F) %&gt;%
   column_spec(1, bold = T, border_right = &quot;1px solid #ddd;&quot;) %&gt;%
@@ -415,14 +415,14 @@ soccer Seattle Fifa13 Portland MLS Gunners reddevils chelseafc football Liverpoo
 <div id="visualizations" class="section level1">
 <h1>Visualizations</h1>
 <p>The first thing I want to do is return to the subreddit edgelist (reddit_edgelist) and add community id variables corresponding to each subreddit. I then filter the dataframe to only include unique edges. I also add a variable called weight_fin which is the mean of the subreddit edge weights between each community.</p>
-<pre class="r"><code>community_edgelist &lt;- left_join(reddit_edgelist, subreddit_by_comm %&gt;% select(id, comm), by = &quot;id&quot;) %&gt;% 
-  left_join(., subreddit_by_comm %&gt;% select(id, comm) %&gt;% rename(comm2 = comm), by = c(&quot;id2&quot;= &quot;id&quot;)) %&gt;% 
-  select(comm, comm2, weight) %&gt;% 
+<pre class="r"><code>community_edgelist &lt;- left_join(reddit_edgelist, subreddit_by_comm %&gt;% select(id, comm), by = &quot;id&quot;) %&gt;%
+  left_join(., subreddit_by_comm %&gt;% select(id, comm) %&gt;% rename(comm2 = comm), by = c(&quot;id2&quot;= &quot;id&quot;)) %&gt;%
+  select(comm, comm2, weight) %&gt;%
   mutate(id_pair = .5*(comm + comm2)*(comm + comm2 + 1) + pmax(comm,comm2)) %&gt;% group_by(id_pair) %&gt;%
-  mutate(weight_fin = mean(weight)) %&gt;% slice(1) %&gt;% ungroup %&gt;% select(comm, comm2, weight_fin) %&gt;% 
+  mutate(weight_fin = mean(weight)) %&gt;% slice(1) %&gt;% ungroup %&gt;% select(comm, comm2, weight_fin) %&gt;%
   filter(comm != comm2)</code></pre>
 <p>We now have a community-level edgelist, consisting of community ids for the community nodes connected by each edge. Many of the edges in this dataframe are connecting nodes to themselves (i.e. comm = comm2). We want to remove these. Let’s look at the data.</p>
-<pre class="r"><code>community_edgelist &lt;- community_edgelist %&gt;% filter(comm != comm2) %&gt;% 
+<pre class="r"><code>community_edgelist &lt;- community_edgelist %&gt;% filter(comm != comm2) %&gt;%
   arrange(desc(weight_fin))
 community_edgelist</code></pre>
 <pre><code>## # A tibble: 532 x 3
@@ -441,43 +441,43 @@ community_edgelist</code></pre>
 ## # … with 522 more rows</code></pre>
 <p>One potential problem is that largest weights (strongest ties) all seem to be between the biggest communities.</p>
 <p>I’m now ready to visualize this network of subreddit communities. The first thing I need to do is modify the edge weight variable to discriminate between communities that are more and less connected. I choose an arbitrary cutoff point (.007) and set all weights below this cutoff to 0. Although doing this creates a risk of imposing structure on the network where there is none, this cutoff will also help highlight significant ties between communities.</p>
-<pre class="r"><code>community_edgelist_ab &lt;- community_edgelist %&gt;% 
-  mutate(weight =  ifelse(weight_fin &gt; .007, weight_fin, 0)) %&gt;% 
+<pre class="r"><code>community_edgelist_ab &lt;- community_edgelist %&gt;%
+  mutate(weight =  ifelse(weight_fin &gt; .007, weight_fin, 0)) %&gt;%
   filter(weight!=0) %&gt;% mutate(weight = abs(log(weight)))</code></pre>
 <p>The visualization tools that I use here come from the visnetwork package. For an excellent set of tutorials on network visualizations in R, check out the tutorials section of Professor Katherine Ognyanova’s website (<a href="https://kateto.net/tutorials/">kateto.net/tutorials/</a>). Much of what I know about network visualization in R I learned from the “Static and dynamic network visualization in R” tutorial.</p>
 <p>Visnetwork’s main function, visNetwork, requires two arguments, one for nodes data and one for edges data. These dataframes need to have particular column names for visnetwork to be able to make sense of them. Let’s start with the edges data. The column names for the nodes corresponding to edges in the edgelist need to be “from” and “to”, and the column name for edge weights needs to be weight. I make these adjustments.</p>
-<pre class="r"><code>community_edgelist_mod &lt;- community_edgelist_ab %&gt;% 
+<pre class="r"><code>community_edgelist_mod &lt;- community_edgelist_ab %&gt;%
   rename(from = comm, to = comm2) %&gt;% select(from, to, weight) </code></pre>
 <p>Also, visnetwork’s default edges are curved. I prefer straight edges. To ensure edges are straight, add a smooth column and set it to <code>FALSE</code>.</p>
 <pre class="r"><code>community_edgelist_mod$smooth &lt;- F</code></pre>
 <p>I’m not ready to set up the nodes data. First, I extract all nodes from the community edgelist.</p>
 <pre class="r"><code>community_nodes &lt;- c(community_edgelist_mod %&gt;% .[[&quot;from&quot;]], community_edgelist_mod %&gt;% .[[&quot;to&quot;]]) %&gt;% unique</code></pre>
 <p>Visnetwork has this really cool feature that lets you view node labels by hovering over them with your mouse cursor. This is made possible by the fact that the package renders visualizations in javascript. I’m going to label each community with the names of the 4 most popular subreddits in that community.</p>
-<pre class="r"><code>comm_by_label &lt;- subreddit_by_comm %&gt;% arrange(comm, desc(imp)) %&gt;% group_by(comm) %&gt;% slice(1:4) %&gt;% 
+<pre class="r"><code>comm_by_label &lt;- subreddit_by_comm %&gt;% arrange(comm, desc(imp)) %&gt;% group_by(comm) %&gt;% slice(1:4) %&gt;%
   summarise(title = paste(subreddit, collapse = &quot; &quot;))</code></pre>
 <p>Next, I put node ids and community labels in a tibble. Note that the label column in this tibble has to be called “title”.</p>
 <pre class="r"><code>community_nodes_fin &lt;- tibble(comm = community_nodes) %&gt;% left_join(., comm_by_label, by = &quot;comm&quot;)</code></pre>
 <p>I want the nodes of my network to vary in size based on the size of each community. To do this, I create a community importance key. I’ve already calculated community importance above. I simply extract this score for each community from the subreddit_by_comm dataframe. I then merge the importance scores with the nodes data. I rename the community importance variable “size”, which is the node size column name that visnetwork recognizes.</p>
-<pre class="r"><code>comm_imp_key &lt;- subreddit_by_comm %&gt;% group_by(comm) %&gt;% slice(1) %&gt;% 
+<pre class="r"><code>comm_imp_key &lt;- subreddit_by_comm %&gt;% group_by(comm) %&gt;% slice(1) %&gt;%
   arrange(desc(comm_imp)) %&gt;% select(comm, comm_imp)
 
-community_nodes_fin &lt;- inner_join(community_nodes_fin, comm_imp_key, by = &quot;comm&quot;) %&gt;% 
+community_nodes_fin &lt;- inner_join(community_nodes_fin, comm_imp_key, by = &quot;comm&quot;) %&gt;%
   rename(size = comm_imp) </code></pre>
 <p>One issue is that my “mainstream Reddit/residual subreddits” community is that it is so much bigger than the other communities in the data that the network visualization will be overtaken by it if I don’t adjust the size variable. I remedy this by raising community size to the “.3”th power (close to the cube root).</p>
 <pre class="r"><code>community_nodes_fin &lt;- community_nodes_fin %&gt;% mutate(size = size^.3)</code></pre>
 <p>I can now enter the nodes and edges data into the visNetwork function. One last change to the nodes data - I had forgotten to name the node id column “id”. This is necessary for visnetwork to work. I make a few adjustments to the default parameters. One newish feature of visnetwork is that it lets you use layouts from the igraph package. I use visIgraphLayout to set the position of the nodes according to the Fruchterman-Reingold Layout Algorithm (layout_with_fr). I also adjust edge widths and highlightNearest to <code>TRUE</code>. This lets you highlight a node and the nodes it is connected to by clicking on it. Without further ado, let’s look at the network.</p>
-<p>IFRAME LINE 2013–</p>
+<iframe src="net_2013.html" width = "800" height = "550" scrolling = "no" frameborder = "0"></iframe>
 <p>The communities of Reddit do not appear to be structured into distinct categories. We don’t see a cluster of communities involving hobbies and a different cluster of advice communities, for instance. Instead, we have some evidence to suggest that the strongest ties are among some of the larger subcultures of Reddit (or they were in 2013). Many of the nodes in the large cluster of communities above are in the 2-30 range in terms of community size. On the other hand, the largest community (mainstream Reddit/subreddits that don’t belong in a particular community) is out on a island. This does not mean that people who post to the mainstream subreddits never post to more fringe subreddits (recall that I dropped edges with small weights). Rather, it suggests that the ties created by these users are weaker than the ties created by users who post to multiple “fringier” communities.</p>
 <p>The substance of some of these communities lends credence to this interpretation. Many of the communities in the large cluster of Reddit communities are somewhat related in their content. There are a lot of gaming communities, several drugs and music communities, a couple of sports communities, and few communities that combine gaming, music, sports, and drugs in different ways. Indeed, most of the communities in this cluster revolve around activities commonly associated with young men. I may be reaching a bit here, but one might infer from this network that Reddit is organized into two social spheres, one consisting young men and the other consisting of everybody else. At the very least, these results do not weaken such a claim. Finally, I should caution the reader against extrapolating too much from the network above. These ties are just based on a sample of 30 days of submissions. It’s possible that something occurred during this period that momentarily brought Reddit certain communities closer together than they would be otherwise. There are links among some nodes in the network that don’t make much logical sense. For instance, the linux/engineering/3D-Printing community (which only sort of makes sense as a community) is linked to a “guns/knives/coins” community. This strikes me as a bit strange, and I wonder if these communities would look the same if I samples data from another time period. Still, many of the links make a lot of sense. For example, the Bitcoin/Conservative/Anarcho_Capitalism community is tied to the Anarchism/progressive/socialism/occupywallstreet community. The Drugs/bodybuilding community is connected to the MMA/Joe Rogan community. That one makes almost too much sense. Anyway, I encourage you to click on the network nodes to see what you find.</p>
 <p>As interesting as these results are, I can’t help but feel like we’re not making the best use of the data available to us. One of the coolest things about the Reddit repository is that it contains temporally precise information on everything that’s happen on Reddit from its inception to only a few months ago. In the final section of this post, I rerun the above analyses on all the Reddit submissions in May between 2014-2019. I’m using the bash script I posted about to do this. I’m simply entering the .csv file for each time period into the code from this post and generating a separate community network for each period. Let’s have a look at them and hopefully gain some insight into how Reddit has evolved over the past several years.</p>
-<p>IFRAME LINE 2015</p>
+<iframe src="net_2015.html" width = "800" height = "550" scrolling = "no" frameborder = "0"></iframe>
 <p>Here’s the network structure of Reddit communities in May 2015. The most noticeable difference between this network and the previous one is that the largest community is linked to the other communities in the network. This might suggest that the smaller communities of Reddit were less isolated from mainstream Reddit during this time. Still, I’m reluctant to take too much from this change in the network. It’s possible that the strength of the ties between this community and the other communities increased only slightly from the last period, just enough to clear the cutoff for including edges.</p>
 <p>Aside from this difference, not much has changed from the last network. As in 2013, the communities in the 2015 network revolve around gaming, music, sports, and drugs. These communities all seem to be pretty interconnected, and there doesn’t appear to be a structure of communities into broader categories.</p>
-<p>IFRAME LINE 2017</p>
+<iframe src="net_2017.html" width = "800" height = "550" scrolling = "no" frameborder = "0"></iframe>
 <p>This is where we start to notice some interesting changes. Perhaps owing the overall growth of Reddit between 2015 and 2017, we start to see a hierarchical structure among the communities of Reddit. A few of the larger communities now have smaller communities budding off of them. I see four of these “parent communities”. One of them is the music community. There’s a musicals/broadway community, a reggae community, an anime music community, and a “deepstyle” (whatever that is) community stemming from this community. Another parent community is the sports community, which has a few location-based community, a lacrosse community, and a Madden community abutting it. The other two parent communities are porn communities. I won’t name the communities stemming from these, but as you might guess many of them revolve around more niche sexual interests.</p>
 <p>This brings us to another significant change between this network and the one from 2015: the emergence of porn on Reddit. We now see that two of the largest communities involve porn. We also start to see some differentiation among the porn communities. There a straight porn community, a gay porn community, and a sex-based kik community (kik is a messenger app). It appears that since 2015 Reddit is increasingly serving some of the same functions as Craigslist, providing users with a place to arrange to meet up, either online or in person, for sex. As we’ll see in the 2019 network, this function has only continued to grow. This is perhaps due to the Trump Administration’s sex trafficking bill and Craigslist’s decision to shutdown its “casual encounters” personal ads in 2018.</p>
 <p>Speaking of Donald Trump, where is he in our network? Indeed, this visualization belies the growing presence of Donald Trump on Reddit between 2015 and 2017. The_Donald is a subreddit for fans of Donald Trump that quickly became of the most popular subreddits on Reddit during this time. The reason that we don’t see it here is that it falls into the mainstream Reddit community, and despite its popularity it is not one of the four largest subreddits in this community. The placement of The_Donald in this community was one of the most surprising results of this project. I had expected The_Donald to fall into a conservative political community, or something like that. The reason The_Donald falls into the mainstream community, I believe, is that much of The_Donald consists of news and memes, the bread and butter of Reddit. Many of the most popular subreddits in the mainstream community are meme subreddits - Showerthoughts, drankmemes, funny - and the overlap between users who post to these subreddits and users who post to The_Donald is substantial.</p>
-<p>IFRAME LINE 2019</p>
+<iframe src="net_2019.html" width = "800" height = "550" scrolling = "no" frameborder = "0"></iframe>
 <p>That brings us to May 2019. What’s changed from 2017? The network structure is similar - we have two groups, mainstream Reddit and a interconnected cluster of smaller communities. The cluster has the same somewhat hierarchical strucutre that we saw in the 2017 network, and a couple of large “parent communities” are porn communities. This network also shows the rise of Bitcoin on Reddit. Indeed, while Bitcoin was missing from the 2017, in 2019 it constitutes one of the largest communities on the entire website. It’s connected to a conspiracy theory community, a porn community, a gaming community, an exmormon/exchristian community, a tmobile/verizon community, and architecture community. While some of these ties may be coincidental, some of them likely reflect real cultural overlaps.</p>
 </div>
 <div id="recapnext-steps" class="section level1">
