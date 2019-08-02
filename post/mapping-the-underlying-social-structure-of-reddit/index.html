@@ -173,13 +173,13 @@ head(reddit_data)</code></pre>
 ##  1 --5Dhere   depression    awakened        7644 29936   135   135   7.06e8
 ##  2 --Adam--   AskReddit     techsupport    15261 28113   135   142   9.41e8
 ##  3 --Caius--  summonerscho… leagueoflegen…    79     3   124   142   3.48e3
-##  4 --Gianni-- movies        AskReddit      20348 15261   124   125   6.34e8
-##  5 --Gianni-- movies        pics           20348  5043   124   126   3.22e8
+##  4 --Gianni-- gaming        AskReddit      10158 15261   131   125   3.23e8
+##  5 --Gianni-- movies        AskReddit      20348 15261   124   125   6.34e8
 ##  6 --Gianni-- gaming        movies         10158 20348   131   124   4.65e8
-##  7 --Gianni-- gaming        AskReddit      10158 15261   131   125   3.23e8
-##  8 --Gianni-- gaming        videos         10158  5042   131   138   1.16e8
-##  9 --Gianni-- AskReddit     videos         15261  5042   125   138   2.06e8
-## 10 --Gianni-- pics          AskReddit       5043 15261   126   125   2.06e8
+##  7 --Gianni-- pics          AskReddit       5043 15261   126   125   2.06e8
+##  8 --Gianni-- AskReddit     videos         15261  5042   125   138   2.06e8
+##  9 --Gianni-- pics          videos          5043  5042   126   138   5.09e7
+## 10 --Gianni-- movies        pics           20348  5043   124   126   3.22e8
 ## # … with more rows</code></pre>
 <p>We now have a dataframe where each row represents a link between two subreddits through a distinct user. Many pairs of subreddits are connected by multiple users. We can think of subreddit pairs connected through more users as being more connected than subreddit pairs connected by fewer users. With this in mind, I create a “weight” variable that tallies the number of users connecting each subreddit pair and then filter the dataframe to unique pairs.</p>
 <pre class="r"><code>reddit_network_data &lt;- reddit_network_data %&gt;% group_by(id_pair) %&gt;% 
@@ -262,9 +262,9 @@ reddit_edgelist</code></pre>
 <p>We now have our final edgelist. There are about 56,000 thousand rows in the data, though most edges have very small weights. Next, I use the igraph package to turn this dataframe into a graph object. Graph objects can be analyzed using igraph’s clustering algorithms. Let’s have a look at what this graph object looks like.</p>
 <pre class="r"><code>reddit_graph &lt;- graph_from_data_frame(reddit_edgelist, directed = FALSE)
 reddit_graph</code></pre>
-<pre><code>## IGRAPH 1d63439 UNW- 5561 56257 -- 
+<pre><code>## IGRAPH 191a99b UNW- 5561 56257 -- 
 ## + attr: name (v/c), weight (e/n)
-## + edges from 1d63439 (vertex names):
+## + edges from 191a99b (vertex names):
 ##  [1] 1--12735 1--10158 1--2601  1--17856 1--22900 1--25542 1--15260
 ##  [8] 1--20340 2--2770  2--15261 2--18156 2--20378 2--41    2--22888
 ## [15] 2--28115 2--10172 2--5043  2--28408 2--2553  2--2836  2--28096
@@ -408,9 +408,9 @@ soccer Seattle Fifa13 Portland MLS Gunners reddevils chelseafc football Liverpoo
 </tbody>
 </table>
 
-<p>The largest community in this table, community 1, happens to contain the ten most popular subreddits on Reddit according to the subreddit importance key. Although some of these subreddits are similar in terms of their content - many of them revolve around memes, for example - some of these subreddit do not appear to belong in the same community. This community may represent mainstream Reddit. Enough people post to these subreddits that categorizing them in any of the other communities reduces the modularity of the network.</p>
+<p>The largest community in this table, community 1, happens to contain the ten most popular subreddits on Reddit. Although some of these subreddits are similar in terms of their content - many of them revolve around memes, for example - a couple of them do not appear to belong in the same community (e.g. videos and gaming). One explanation is that this first group of subreddits represents mainstream Reddit. In other words, the people who post to these subreddits are generalist posters - they submit to a broad enough range of subreddits that categorizing these subreddits into any of the other communities would reduce the modularity of the network.</p>
 <p>The other 9 communities in the figure are easier to interpret. Each one revolves are a specific topic. Communities 2, 8, and 9 are gaming communities dedicated to specific games; communities 4 and 10 are sports communities; the remaining communities are dedicated to electronic music, cars, web design and photography.</p>
-<p>We have somewhat successfully taken a month worth of Reddit submissions and identified subreddit communities from them. On one hand, the Louvain algorithm successfully identified many medium-sized communities that revolve around specific topics. It’s easy to imagine that the people who post to these groups of subreddits contribute almost exclusively to them, and that it therefore makes sense to think of them as communities. On the other hand, the largest community has some pretty substantively dissimilar subreddits. These also happen to be the largest subreddits on Reddit. The sanguine interpretation of this group is that they represent a community of mainstream users. However, the alternative possibly that this community is really just a residual category of subreddits that don’t really belong together but also don’t have any obvious place in the other subreddit communities. I bracket this issue for now. I will return to it in the final section of this post.</p>
+<p>In sum, we have taken a month worth of Reddit submissions, converted them into a network, and identified subreddit communities from them. How successful were we? On one hand, the Louvain algorithm correctly identified many medium-sized communities revolving around specific topics. It’s easy to imagine that the people who post to these groups of subreddits contribute almost exclusively to them, and that it therefore makes sense to think of them as communities. On the other hand, the largest community has some pretty substantively dissimilar subreddits. These also happen to be the largest subreddits on Reddit. The optimistic interpretation of this grouping is that these subreddits encompass a community of mainstream users. However, the alternative possibly that this community is really just a residual category of subreddits that don’t really belong together but also don’t have any obvious place in the other subreddit communities. Let’s set this issue to the side for now.</p>
 <p>In the next section, I will visualize these communities as a community network and examine how this network has evolved over time.</p>
 </div>
 <div id="visualizations" class="section level1">
@@ -511,7 +511,7 @@ src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM
 
         		<footer>
 			<span>
-			&copy; <time datetime="2019-08-02 14:58:18.372892 -0400 EDT m=&#43;9.863804549">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
+			&copy; <time datetime="2019-08-02 16:56:19.208432 -0400 EDT m=&#43;7.807254537">2019</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
 			</span>
 		</footer>
 
