@@ -22,6 +22,4 @@ th, td {
 
 tr:nth-child(even) {background-color: #f2f2f2;}
 
-shiny-int {
-  text-align: center; 
-}
+post-line2 {border-top:0.4rem solid #353535;display:block;margin:5 auto 3rem;width:4rem}
