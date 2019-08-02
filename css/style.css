@@ -21,3 +21,7 @@ th, td {
 }
 
 tr:nth-child(even) {background-color: #f2f2f2;}
+
+shiny-int {
+  text-align: center; 
+}
