@@ -21,3 +21,19 @@ th, td {
 }
 
 tr:nth-child(even) {background-color: #f2f2f2;}
+
+
+
+.highcharts {
+    position: relative;
+    padding-bottom: 90%; // (450 ÷ 500 = 0.9 = 90%)
+    height: 0;
+    overflow: hidden;
+}
+.highcharts iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
