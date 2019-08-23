@@ -329,7 +329,71 @@ head(pred_ratings_tbl)</code></pre>
 ## 5 Firestone Walker Brewing Co. Double Double Barrel Ale       5
 ## 6 Green Flash Brewing Co. Spanish Trampoline                  5</code></pre>
 <p>Many of this user’s favorite beers are American IPAs, and some of them are American Imperial IPAs. They also come from a geographically-distributed set of breweries. These are encouraging results.</p>
-<p>I encourage you to try this recommendation system on your own set of beer ratings. If you don’t want to bother running this code on your computer, I’ve created an app that produces recommendations and updates them as you add beer ratings. Navigate over to the Shiny section of my website to check it out, and thanks for reading!</p>
+<p>The function below recommends six beers using the approach described in this post.</p>
+<pre class="r"><code>recommend_beers &lt;- function(input_vec, similarity_cutoff = 3){
+
+# Replace missing values with 0
+input_vec[is.na(input_vec)] &lt;- 0
+
+if(length(input_vec) != nrow(beer_key)){
+  stop(&quot;Please enter a 24542-length vector!&quot;)}else if(
+  length(input_vec[input_vec &gt; 5 | input_vec &lt; 0]) &gt; 0){
+    stop(&quot;Vector can only contain values between 0 and 5!&quot;)}
+
+rated_beer_ids &lt;- which(input_vec != 0)
+
+sim_scores &lt;- map(item_similarity_matrix, ~.x %&gt;%
+                    filter(id %in% rated_beer_ids) %&gt;%
+                    .[[&quot;score&quot;]])
+
+candidate_beer_ids &lt;- which(sim_scores %&gt;%
+                              map(., ~length(.x) &gt;= similarity_cutoff) %&gt;%
+                              unlist)
+
+if(!is_empty(candidate_beer_ids)){
+
+candidate_beer_ids &lt;- candidate_beer_ids[!(candidate_beer_ids %in%
+                                             rated_beer_ids)]
+
+denoms &lt;- map(item_similarity_matrix[candidate_beer_ids], ~.x %&gt;%
+                filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]] %&gt;% sum)
+
+# List of similarity scores
+sims_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
+                 ~.x %&gt;% filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]])
+
+# List of ratings
+ratings_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
+                    ~input_vec[.x %&gt;% filter(id %in% rated_beer_ids) %&gt;%
+                                    .[[&quot;id&quot;]]])
+
+nums &lt;- map2(sims_vecs, ratings_vecs, ~sum(.x*.y))
+
+predicted_ratings &lt;- map2(nums, denoms, ~.x/.y)
+
+pred_ratings_tbl &lt;- tibble(beer_full = beer_key %&gt;%
+                             filter(id %in% candidate_beer_ids) %&gt;%
+                             .[[&quot;beer_full&quot;]],
+                           pred_rating = predicted_ratings %&gt;% unlist) %&gt;%
+                           arrange(desc(pred_rating))
+
+head(pred_ratings_tbl) %&gt;% return}else{
+  print(&quot;You haven&#39;t rated enough beers!&quot;)}
+}</code></pre>
+<p>Let’s test this function on a random user from the data.</p>
+<pre class="r"><code>set.seed(123)
+recommend_beers(beer_sparse[base::sample(num_users, 1),])</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   beer_full                                                     pred_rating
+##   &lt;chr&gt;                                                               &lt;dbl&gt;
+## 1 Boston Beer Company (Samuel Adams) Harvest Saison                    4.53
+## 2 Coors Brewing Company (Molson-Coors) Blue Moon Short Straw F…        4.46
+## 3 Anheuser-Busch Shock Top Honey Bourbon Cask Wheat                    4.45
+## 4 Coors Brewing Company (Molson-Coors) Blue Moon Valencia Ambe…        4.44
+## 5 Coors Brewing Company (Molson-Coors) Blue Moon Farmhouse Red…        4.42
+## 6 Coors Brewing Company (Molson-Coors) Blue Moon Caramel Apple…        4.41</code></pre>
+<p>It worked! I question this beer drinker’s taste, but that’s another story.</p>
+<p>For those who want to test this recommender system on their own set of beer ratings, I’ve created a beer recommendation app that implements the methods I have outlined here. Navigate over to the Shiny section of my website to check it out, and thanks for reading!</p>
 
 
 		<script src="//yihui.name/js/math-code.js"></script>
