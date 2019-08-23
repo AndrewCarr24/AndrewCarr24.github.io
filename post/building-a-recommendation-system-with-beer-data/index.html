@@ -34,8 +34,7 @@
   </div>
 </nav>
 
- <link rel="stylesheet"
-href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css">
+<link rel="stylesheet" href="path/to/font-awesome/css/font-awesome.min.css">
  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js">
 </script> <script>hljs.initHighlightingOnLoad();</script>
 
@@ -143,7 +142,7 @@ head(beer_sparse)</code></pre>
 ##  .....suppressing columns in show(); maybe adjust &#39;options(max.print= *, width = *)&#39;
 ##  ..............................</code></pre>
 <p>This provides a snapshot of the first six users in the matrix. The dots represent empty cells and the numbers represent ratings. This object is only 63Mb, large for a sparse matrix, but manageable for our purposes. Our next step is to calculate similarity scores among beers. Before we can do this, we need to make some more modifications to the data.</p>
-<p>One problem with the data in its present form is that information for each beer is stored in a high dimensional vector. This poses computational and mathematical problems. A common way to get around this issue is to make do a partial singular value decomposition (SVD) of the sparse matrix. An SVD is a kind of matrix factorization that breaks an m by n matrix into three parts: an m by m matrix (“U”), an m by n diagonal matrix (“d”), and an n by n matrix (“V”). A partial SVD keeps only the columns and rows in U and V that correspond with the largest singular values in d. This amounts to replacing the high dimensional matrix with some lower dimensional matrices that retain much of the information in the original matrix. The irlba package in R lets you specify the number of singular values to use in a partial SVD. Most useful for our purposes, irlba can perform partial SVDs on sparse matrices. I make the arbitrary choice here to keep the 25 largest singular values, factoring my sparse matrix into an ~105,000x25 matrix (U), a 25x25 matrix (d), and a ~25x24,500 matrix (V). The matrix that interests me is V, which the irlba package automatically transposes into a 24,500x25 matrix. This can be thought of as representing ratings patterns for 24,500 beers (the rows) along 25 latent dimensions (the columns), albeit at a loss of some information. Let’s have a look at the first few rows of V.</p>
+<p>One problem with the data in its present form is that information for each beer is stored in a high dimensional vector. This poses computational and mathematical problems. A common way to get around this issue is to do a partial singular value decomposition (SVD) of the sparse matrix. An SVD is a kind of matrix factorization that breaks an m by n matrix into three parts: an m by m matrix (“U”), an m by n diagonal matrix (“d”), and an n by n matrix (“V”). A partial SVD keeps only the columns and rows in U and V that correspond with the largest singular values in d. This amounts to replacing the high dimensional matrix with some lower dimensional matrices that retain much of the information in the original matrix. The irlba package in R lets you specify the number of singular values to use in a partial SVD. Most useful for our purposes, irlba can perform partial SVDs on sparse matrices. I make the arbitrary choice here to keep the 25 largest singular values, factoring my sparse matrix into an ~105,000x25 matrix (U), a 25x25 matrix (d), and a ~25x24,500 matrix (V). The matrix that interests me is V, which the irlba package automatically transposes into a 24,500x25 matrix. This can be thought of as representing ratings patterns for 24,500 beers (the rows) along 25 latent dimensions (the columns), albeit at a loss of some information. Let’s have a look at the first few rows of V.</p>
 <pre class="r"><code>beer_sparse_svd &lt;- irlba(beer_sparse, 25)
 head(beer_sparse_svd$v)</code></pre>
 <pre><code>##               [,1]         [,2]        [,3]          [,4]         [,5]
@@ -393,7 +392,7 @@ recommend_beers(beer_sparse[base::sample(num_users, 1),])</code></pre>
 ## 5 Coors Brewing Company (Molson-Coors) Blue Moon Farmhouse Red…        4.42
 ## 6 Coors Brewing Company (Molson-Coors) Blue Moon Caramel Apple…        4.41</code></pre>
 <p>It worked! I question this beer drinker’s taste, but that’s another story.</p>
-<p>For those who want to test this recommender system on their own set of beer ratings, I’ve created a beer recommendation app that implements the methods I have outlined here. Navigate over to the Shiny section of my website to check it out, and thanks for reading!</p>
+<p>For those who want to test this recommender system on their own set of beer ratings, I’ve created a beer recommendation app that implements the methods I have outlined here. Navigate over to the Shiny section of my website to check it out.  Thanks for reading!</p>
 
 
 		<script src="//yihui.name/js/math-code.js"></script>
