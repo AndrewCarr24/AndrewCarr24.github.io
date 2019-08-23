@@ -59,7 +59,7 @@ href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css"
 
 <p>Beer culture in the United States has changed dramatically in the past decade or so. This trend is reflected in the development of a vibrant community of people who rate, review, and share information about beers online. Websites like BeerAdvocate, RateBeer, and Untappd give beer drinkers a place to share their beer tastes with others. Surprisingly, despite the large amounts of data these sites have accumulated on people’s beer preferences, these sites do not recommend new beers to their users. This inspired me to create my own recommender system by scraping data from some of these sites. While some beer sites prohibit web scraping, others only disallow scraping their data for commercial use. Others place no restrictions on scraping at all. For this project, I only scraped sites that did not proscribe scraping in a robots.txt file. Ethical (and legal) web scraping has been made easier with the recent development of the polite package, which you can check out on
 <a href ="https://github.com/dmi3kno/polite"> Github</a>.</p>
-<p>By scraping these sites, I created a dataset of approximately 5.5 million ratings of about 24.5 thousand beers from roughly 100 thousand users. These data include in-depth reviews along with metadata on both beers (e.g. brewery location, beer style) and users (gender and age, location). I train my recommender system with only the beer names, user ratings, and user ids from this data. You can download the data <a href="https://duke.box.com/v/bbspring-beer-data">here</a>. The source code for this project can be found on my Github <a href="https://github.com/datadiarist/">page</a>.</p>
+<p>By scraping these sites, I created a dataset of approximately 5.5 million ratings of about 24.5 thousand beers from roughly 100 thousand users. These data include in-depth reviews along with metadata on both beers (e.g. brewery location, beer style) and users (gender and age, location). I train my recommender system with only the beer names, user ratings, and user ids from this data. You can download the data <a href="https://github.com/datadiarist/large_files/blob/master/beer_data_fin.csv">here</a>. The source code for this project can be found on my Github <a href="https://github.com/datadiarist/">page</a>.</p>
 <p>The internet has no shortage of tutorials for coding up recommendation systems in R. Many of these, however, are based on smaller datasets. The recommenderlab function has great ready-made functions for training recommendation models, but these fail on larger datasets like the one I have here. For this reason, I build my recommendation system from scratch.</p>
 <p>For the first part of this project, I import my data as a Spark dataframe and manipulate it using functions from the sparklyr package. Although R has no trouble fitting this dataset (it’s only 292Mb) into the workspace, I can manipulate this data much faster using Spark and sparklyr.</p>
 <p>Let’s begin by importing the data and seeing what it looks like.</p>
@@ -329,71 +329,7 @@ head(pred_ratings_tbl)</code></pre>
 ## 5 Firestone Walker Brewing Co. Double Double Barrel Ale       5
 ## 6 Green Flash Brewing Co. Spanish Trampoline                  5</code></pre>
 <p>Many of this user’s favorite beers are American IPAs, and some of them are American Imperial IPAs. They also come from a geographically-distributed set of breweries. These are encouraging results.</p>
-<p>I encourage you to try this recommendation system on your own set of beer ratings. The function below contains the code for computing predicted beer ratings. Enter a vector of beer ratings and the function will return six recommendations. To create a vector of beer ratings, first create a 24542-length vector of 0’s. Then, search the beer key (called “beer_key”) to find the index of the beer you want to rate, just as I did with Sculpin above. Enter your rating in the vector of 0’s at the appropriate position. When you’ve created a vector of beer ratings, enter it into the function. One last thing - while the recommendation system discussed above only recommended beers with at least 5 similar beers to beers that the user rated, the function below has a default of 3 similar beers. This is the second argument of the function, “similarity_cutoff”. To change this default, simply enter a number other than 3 as the second argument.</p>
-<pre class="r"><code>recommend_beers &lt;- function(input_vec, similarity_cutoff = 3){
-
-# Replace missing values with 0
-input_vec[is.na(input_vec)] &lt;- 0
-
-if(length(input_vec) != nrow(beer_key)){
-  stop(&quot;Please enter a 24542-length vector!&quot;)}else if(
-  length(input_vec[input_vec &gt; 5 | input_vec &lt; 0]) &gt; 0){
-    stop(&quot;Vector can only contain values between 0 and 5!&quot;)}
-
-rated_beer_ids &lt;- which(input_vec != 0)
-
-sim_scores &lt;- map(item_similarity_matrix, ~.x %&gt;%
-                    filter(id %in% rated_beer_ids) %&gt;%
-                    .[[&quot;score&quot;]])
-
-candidate_beer_ids &lt;- which(sim_scores %&gt;%
-                              map(., ~length(.x) &gt;= similarity_cutoff) %&gt;%
-                              unlist)
-
-if(!is_empty(candidate_beer_ids)){
-
-candidate_beer_ids &lt;- candidate_beer_ids[!(candidate_beer_ids %in%
-                                             rated_beer_ids)]
-
-denoms &lt;- map(item_similarity_matrix[candidate_beer_ids], ~.x %&gt;%
-                filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]] %&gt;% sum)
-
-# List of similarity scores
-sims_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
-                 ~.x %&gt;% filter(id %in% rated_beer_ids) %&gt;% .[[&quot;score&quot;]])
-
-# List of ratings
-ratings_vecs &lt;- map(item_similarity_matrix[candidate_beer_ids],
-                    ~input_vec[.x %&gt;% filter(id %in% rated_beer_ids) %&gt;%
-                                    .[[&quot;id&quot;]]])
-
-nums &lt;- map2(sims_vecs, ratings_vecs, ~sum(.x*.y))
-
-predicted_ratings &lt;- map2(nums, denoms, ~.x/.y)
-
-pred_ratings_tbl &lt;- tibble(beer_full = beer_key %&gt;%
-                             filter(id %in% candidate_beer_ids) %&gt;%
-                             .[[&quot;beer_full&quot;]],
-                           pred_rating = predicted_ratings %&gt;% unlist) %&gt;%
-                           arrange(desc(pred_rating))
-
-head(pred_ratings_tbl) %&gt;% return}else{
-  print(&quot;You haven&#39;t rated enough beers!&quot;)}
-}</code></pre>
-<p>Let’s test the function on a random user from the data.</p>
-<pre class="r"><code>set.seed(123)
-recommend_beers(beer_sparse[base::sample(num_users, 1),])</code></pre>
-<pre><code>## # A tibble: 6 x 2
-##   beer_full                                                     pred_rating
-##   &lt;chr&gt;                                                               &lt;dbl&gt;
-## 1 Boston Beer Company (Samuel Adams) Harvest Saison                    4.53
-## 2 Coors Brewing Company (Molson-Coors) Blue Moon Short Straw F…        4.46
-## 3 Anheuser-Busch Shock Top Honey Bourbon Cask Wheat                    4.45
-## 4 Coors Brewing Company (Molson-Coors) Blue Moon Valencia Ambe…        4.44
-## 5 Coors Brewing Company (Molson-Coors) Blue Moon Farmhouse Red…        4.42
-## 6 Coors Brewing Company (Molson-Coors) Blue Moon Caramel Apple…        4.41</code></pre>
-<p>It worked! I question this beer drinker’s taste, but that’s another story.</p>
-<p>If you don’t want to bother running this code on your computer, I’ve created an app that produces recommendations and updates them as you add beer ratings. Navigate over to the Shiny section of my website to check it out, and thanks for reading!</p>
+<p>I encourage you to try this recommendation system on your own set of beer ratings. If you don’t want to bother running this code on your computer, I’ve created an app that produces recommendations and updates them as you add beer ratings. Navigate over to the Shiny section of my website to check it out, and thanks for reading!</p>
 
 
 		<script src="//yihui.name/js/math-code.js"></script>
