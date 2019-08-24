@@ -329,7 +329,7 @@ head(pred_ratings_tbl)</code></pre>
 ## 5 Firestone Walker Brewing Co. Double Double Barrel Ale       5
 ## 6 Green Flash Brewing Co. Spanish Trampoline                  5</code></pre>
 <p>Many of this user’s favorite beers are American IPAs, and some of them are American Imperial IPAs. They also come from a geographically-distributed set of breweries. These are encouraging results.</p>
-<p>The function below encapsulates the steps for producing recommendations described above.</p>
+<p>The following function takes a vector of beer ratings, applies the steps detailed above, and returns a list of beer recommendations.</p>
 <pre class="r"><code>recommend_beers &lt;- function(input_vec, similarity_cutoff = 3){
 
 # Replace missing values with 0
