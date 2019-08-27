@@ -26,7 +26,7 @@
       <pubDate>Tue, 16 Jul 2019 00:00:00 +0000</pubDate>
 
       <guid>https://datadiarist.github.io/post/building-a-recommendation-system-with-beer-data/</guid>
-      <description>Beer culture in the United States has changed dramatically in the past decade or so. One reflection of this is that the number of small-scale breweries has increased in every state in the country. This trend is also reflected in the development of a vibrant community of people who rate, review, and share information about beers online. Websites like BeerAdvocate, RateBeer, and Untappd provide forums for beer drinkers to discuss their favorite beers with each other.</description>
+      <description>{{ .Content | safeHTML }}</description>
     </item>
 
   </channel>
