@@ -1,27 +1,33 @@
-{{ printf "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"yes\" ?>" | safeHTML }}
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>{{ if eq  .Title  .Site.Title }}{{ .Site.Title }}{{ else }}{{ with .Title }}{{.}} on {{ end }}{{ .Site.Title }}{{ end }}</title>
-    <link>{{ .Permalink }}</link>
-    <description>Recent content {{ if ne  .Title  .Site.Title }}{{ with .Title }}in {{.}} {{ end }}{{ end }}on {{ .Site.Title }}</description>
-    <generator>Hugo -- gohugo.io</generator>{{ with .Site.LanguageCode }}
-    <language>{{.}}</language>{{end}}{{ with .Site.Author.email }}
-    <managingEditor>{{.}}{{ with $.Site.Author.name }} ({{.}}){{end}}</managingEditor>{{end}}{{ with .Site.Author.email }}
-    <webMaster>{{.}}{{ with $.Site.Author.name }} ({{.}}){{end}}</webMaster>{{end}}{{ with .Site.Copyright }}
-    <copyright>{{.}}</copyright>{{end}}{{ if not .Date.IsZero }}
-    <lastBuildDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</lastBuildDate>{{ end }}
-    {{ with .OutputFormats.Get "RSS" }}
-        {{ printf "<atom:link href=%q rel=\"self\" type=%q />" .Permalink .MediaType | safeHTML }}
-    {{ end }}
-    {{ range .Pages }}
+    <title>Data Science Diarist</title>
+    <link>/</link>
+    <description>Recent content on Data Science Diarist</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Mon, 22 Jul 2019 00:00:00 +0000</lastBuildDate>
+
+	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+
+
     <item>
-      <title>{{ .Title }}</title>
-      <link>{{ .Permalink }}</link>
-      <pubDate>{{ .Date.Format "Mon, 02 Jan 2006 15:04:05 -0700" | safeHTML }}</pubDate>
-      {{ with .Site.Author.email }}<author>{{.}}{{ with $.Site.Author.name }} ({{.}}){{end}}</author>{{end}}
-      <guid>{{ .Permalink }}</guid>
-      <description>{{ .Content | html }}</description>
+      <title>Mapping the Underlying Social Structure of Reddit</title>
+      <link>/post/mapping-the-underlying-social-structure-of-reddit/</link>
+      <pubDate>Mon, 22 Jul 2019 00:00:00 +0000</pubDate>
+
+      <guid>/post/mapping-the-underlying-social-structure-of-reddit/</guid>
+      <description>Since it was founded in 2005, Reddit has developed into a popular place for sharing opinions and ideas, rating web content, and aggregating news on the internet. Reddit is organized into thousands of user-made communities, called subreddits, which cover a broad range of subjects, including politics, sports, technology, personal hobbies, and self-improvement, to name a few. Given that Reddit is structured in this way, it is natural to think of Reddit as a population of users organized into many overlapping communities (subreddits).</description>
     </item>
-    {{ end }}
+
+    <item>
+      <title>Building a Recommendation System with Beer Data</title>
+      <link>/post/building-a-recommendation-system-with-beer-data/</link>
+      <pubDate>Tue, 16 Jul 2019 00:00:00 +0000</pubDate>
+
+      <guid>/post/building-a-recommendation-system-with-beer-data/</guid>
+      <description>Beer culture in the United States has changed dramatically in the past decade or so. One reflection of this is that the number of small-scale breweries has increased in every state in the country. This trend is also reflected in the development of a vibrant community of people who rate, review, and share information about beers online. Websites like BeerAdvocate, RateBeer, and Untappd provide forums for beer drinkers to discuss their favorite beers with each other.</description>
+    </item>
+
   </channel>
 </rss>
