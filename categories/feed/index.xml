@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes" ?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
     <title>Posts on Data Science Diarist</title>
     <link>http://datadiarist.github.io/post/</link>
     <description>Recent content in Posts on Data Science Diarist</description>
@@ -350,4 +351,5 @@ recommend_beers(beer_sparse[base::sample(num_users, 1),])&lt;/code&gt;&lt;/pre&g
 &lt;p&gt;If you don’t want to bother running this code on your computer, I’ve created an app that produces recommendations and updates them as you add beer ratings. Navigate over to the Shiny section of my website to check it out, and thanks for reading!&lt;/p&gt;
 </description>
     </item>
+    </channel>
 </rss>
