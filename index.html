@@ -20,9 +20,9 @@
 
         <link rel="alternate" type="application/rss+xml" href="https:/datadiarist.github.io/index.xml" title="Data Science Diarist">
 
-        {{ range .AlternativeOutputFormats -}}
+        <head>{{ range .AlternativeOutputFormats -}}
             {{ printf `<link rel="%s" type="%s" href="%s" title="%s" />` .Rel .MediaType.Type .Permalink $.Site.Title | safeHTML }}
-        {{ end -}}
+        {{ end -}}</head>
 
 	</head>
 
