@@ -221,7 +221,7 @@ item_similarity_matrix[base::sample(nrow(beer_key), 1)]&lt;/code&gt;&lt;/pre&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Creating a 24542-length vector of beer ratings for user 3
 example_user &amp;lt;- beer_sparse[3,]&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;To predict beer ratings based on a user’s past ratings, I use the following formula:&lt;/p&gt;
-&lt;p&gt;&lt;img src=&#34;/post/2019-07-16-building-a-recommendation-system-with-beer-data_files/Screen%20Shot%202019-07-19%20at%205.05.07%20PM.png&#34; /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img src=&#34;https://datadiarist.github.io/post/2019-07-16-building-a-recommendation-system-with-beer-data_files/Screen%20Shot%202019-07-19%20at%205.05.07%20PM.png&#34; /&gt;&lt;/p&gt;
 &lt;p&gt;Following this equation, the predicted rating of a given beer is the average of the ratings of similar beers weighted by their similarity scores. My function will recommend a set of beers based on which beers have the highest predicted ratings according to this equation. The first thing that I need to do is find the beer ids of the beers that the user has already rated.&lt;/p&gt;
 &lt;pre class=&#34;r&#34;&gt;&lt;code&gt;rated_beer_ids &amp;lt;- which(example_user != 0)&lt;/code&gt;&lt;/pre&gt;
 &lt;p&gt;Next, I extract similarity scores between each of the beers the user has rated and similar beers. I use the map function from the purrr package to do this.&lt;/p&gt;
