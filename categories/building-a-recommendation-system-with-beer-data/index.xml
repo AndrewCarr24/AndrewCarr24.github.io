@@ -1,11 +1,10 @@
-<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
-<channel>
-<title>R on Andrew Carr</title>
-<link>https://datadiarist.github.io/categories/building-a-recommendation-system-with-beer-data</link>
-<description>Recent content in R on Andrew Carr</description>
-<generator>Hugo -- gohugo.io</generator>
-<language>en-us</language>
-<copyright>&copy; 2019</copyright>
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <title>Posts on Data Science Diarist</title>
+    <link>http://datadiarist.github.io/post/</link>
+    <description>Recent content in Posts on Data Science Diarist</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
 <lastBuildDate>Fri, 10 Aug 2018 00:00:00 +0000</lastBuildDate>
 <atom:link href="https://datadiarist.github.io/categories/building-a-recommendation-system-with-beer-data/index.xml" rel="self" type="application/rss+xml"/>
 
