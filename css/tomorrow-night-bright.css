@@ -33,6 +33,11 @@
   color: #c397d8;
 }
 
+.hljs-comment {
+    color:#998;
+    font-style:italic
+}
+
 pre code {
   display: block;
   background: black;
@@ -42,5 +47,3 @@ pre code {
   border: 1px solid #ccc;
   padding: 10px;
 }
-
-.hljs-comment,.hljs-quote{color:#998;font-style:italic}
