@@ -42,3 +42,5 @@ pre code {
   border: 1px solid #ccc;
   padding: 10px;
 }
+
+.hljs-comment,.hljs-quote{color:#998;font-style:italic}
