@@ -115,3 +115,10 @@ tr:nth-child(even) {background-color: #f2f2f2;}
 .work-link {
     display: block;
 }
+
+.work-content:hover {
+  -webkit-transition: all 0.5s;
+  -o-transition: all 0.5s;
+  transition: all 0.5s;
+  opacity: 1;
+}
