@@ -57,8 +57,8 @@ tr:nth-child(even) {background-color: #f2f2f2;}
 }
 
 .work-content {
-    background: -o-linear-gradient(315deg, rgba(238, 128, 111, 0.8), rgba(227, 44, 16, 0.8));
-    background: linear-gradient(135deg, rgba(238, 128, 111, 0.8), rgba(227, 44, 16, 0.8));
+    background: -o-linear-gradient(315deg, rgba(100, 108, 111, 0.22), rgba(123, 121, 130, 0.8));
+    background: linear-gradient(135deg, rgba(191, 180, 204, 0.4), rgba(95, 82, 97, 0.8));
     opacity: 0;
     color: var(--cream);
     display: -webkit-box;
