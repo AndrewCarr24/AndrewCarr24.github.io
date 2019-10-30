@@ -142,3 +142,9 @@ tr:nth-child(even) {background-color: #f2f2f2;}
   --sansFont: "Alegreya Sans";
   --sansSC: "Alegreya Sans SC";
 }
+
+.home-wrapper {
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
