@@ -122,3 +122,23 @@ tr:nth-child(even) {background-color: #f2f2f2;}
   transition: all 0.5s;
   opacity: 1;
 }
+
+
+/*colors*/
+:root {
+  --textBlack: #181c20;
+  --figureBlack: #39434D;
+  --lightBlack: #2E363E;
+  --lightGrey: #ABAEB1;
+  --darkGrey: #919598;
+  --accentOrange: #E32C10;
+  --lightOrange: #F9D3CE;
+  /*lighter colors: #E35719, #F5C4AE*/
+  --blue: #133267;
+  --lightBlue: #B8C1D1;
+  --cream: #FCFBFA;
+  --darkCream: #E9E2DA;
+  /* #FDFDFC */
+  --sansFont: "Alegreya Sans";
+  --sansSC: "Alegreya Sans SC";
+}
