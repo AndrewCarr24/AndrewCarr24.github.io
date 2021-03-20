@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en-us">
+    <head>
+		<meta charset="UTF-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+		<title>
+				Introducing twittercrawler &middot; Data Diarist
+		</title>
+
+
+  		<link rel="stylesheet" href="/css/style.css">
+		<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Libre+Baskerville:400,400i,700">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+		<link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32.png">
+		<link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16.png">
+		<link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
+
+
+		<link href="" rel="alternate" type="application/rss+xml" title="Data Science Diarist" />
+	</head>
+
+    <body>
+
+
+
+<nav class="nav">
+  <div class="nav-container">
+      <a href="/">
+        <h2 class="nav-title" style="font-size:32px">Andrew Carr </h2>
+      </a>
+      <a href="https://github.com/AndrewCarr24">
+          <i class="fa fa-github" style="font-size:32px"></i>
+      </a>
+      <a href="https://twitter.com/Andrew_Carr24">
+          <i class="fa fa-twitter" style="font-size:32px"></i>
+      </a>
+      <a href="https://www.linkedin.com/in/andrew-carr24">
+          <i class="fa fa-linkedin" style="font-size:32px"></i>
+      </a>
+    <ul>
+      <li><a href="/about" style="font-size:20px">About</a></li>
+      <li><a href="/shiny" style="font-size:20px">Shiny</a></li>
+      <li><a href="/Dataviz" style="font-size:20px">Data Viz</a></li>
+    </ul>
+  </div>
+</nav>
+
+ <link rel="stylesheet"
+href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/styles/github.min.css">
+ <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.6.0/highlight.min.js">
+</script> <script>hljs.initHighlightingOnLoad();</script>
+
+
+
+<main>
+	<div class="post">
+		<div class="post-info">
+    <span>Written by Andrew Carr</span>
+
+        <br>
+        <span>on&nbsp;</span><time datetime="2019-11-01 00:00:00 &#43;0000 UTC">November 1, 2019</time>
+</div>
+		<h1 class="post-title">Introducing the twittercrawler package</h1>
+<div class="post-line"></div>
+
+<p>The Twitter API is a great tool for researchers interested in analyzing discourse and social network processes on Twitter. In this post, I introduce a new R package, twittercrawler, which automates the process of collecting social network data through the Twitter API. To use twittercrawler, you will need API credentials. You can apply for these through Twitter’s developer pages <a href="https://developer.twitter.com/en/docs/twitter-api/getting-started/guide">developer.twitter.com/en/docs/twitter-api/getting-started/guide</a>.</p>
+<p>Currently, you can install the twittercrawler package through my Github page.</p>
+<pre class="r"><code>devtools::install_github(&quot;AndrewCarr24/twittercrawler&quot;)
+library(twittercrawler)</code></pre>
+<p>To begin, load the package and enter your API credentials into the api_credentials_to_token function.</p>
+<pre class="r"><code>app_name &lt;- #### App name
+consumer_key &lt;- #### Consumer key
+consumer_secret &lt;- #### Consumer secret
+access_token &lt;- #### Access token
+access_secret &lt;- #### Access secret
+
+api_token &lt;- api_credentials_to_token(app_name, consumer_key, consumer_secret, access_token, access_secret)</code></pre>
+<p>The twittercrawler package has one main function: get_user_network. This function requires three parameters. The first parameter, screen_name, is the screen name of the Twitter user you want to collect network data from. The second required parameter, degrees, is the number of “degrees out” you want twittercrawler to go (more on this in a moment). Finally, the token parameter takes the API token returned from api_credentials_to_token.</p>
+<p>Let’s go through example to clarify what these parameters mean. Let’s say I want to collect two degrees of network data for myself. I run the following line of code.</p>
+<pre class="r"><code>user_content &lt;- get_user_network(screen_name = &quot;Andrew_Carr24&quot;, degree = 2, token = api_token)</code></pre>
+<p>This function returns a named list containing two items: a dataframe (nodes) with user information for my Twitter friends and my friends’ friends - in other words, everyone two degrees removed from me on Twitter - and another dataframe (edgelist) indicating ties among these users.</p>
+<pre class="r"><code>user_content</code></pre>
+<pre><code>## $nodes
+## # A tibble: 85,757 x 10
+##    id     screen_name  name  friends_count followers_count location description
+##    &lt;chr&gt;  &lt;chr&gt;        &lt;chr&gt;         &lt;int&gt;           &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;
+##  1 77861… Andrew_Carr… Andr…            94             104 &quot;Durham… &quot;Sociology …
+##  2 12716… RStatsJobsB… RSta…             1             707 &quot;&quot;       &quot;Are you lo…
+##  3 53854… CarenArbeit  Dr. …           228             401 &quot;San Fr… &quot;Sociologis…
+##  4 30922… Effect_Altr… Effe…            60           15355 &quot;&quot;       &quot;#effective…
+##  5 36300… willmacaski… Will…          1183           27492 &quot;Oxford&quot; &quot;Assoc Prof…
+##  6 46955… GrahamDavidA Davi…          1887           34253 &quot;Durham… &quot;\&quot;Dispirit…
+##  7 16017… NateSilver5… Nate…          1378         3642961 &quot;New Yo… &quot;Founder, E…
+##  8 11699… SamHarrisOrg Sam …           553         1470122 &quot;&quot;       &quot;Author of …
+##  9 10448… i_zzzzzz     Broo…           842           33899 &quot;Montre… &quot;Send me yo…
+## 10 65934… eidlin       Barr…          1818            2650 &quot;Montré… &quot;Former org…
+## # … with 85,747 more rows, and 3 more variables: url &lt;chr&gt;,
+## #   profile_image_url &lt;chr&gt;, degree &lt;dbl&gt;
+##
+## $edges
+## # A tibble: 120,094 x 2
+##    from               to
+##    &lt;chr&gt;              &lt;chr&gt;
+##  1 778619636510326784 1271627871098941441
+##  2 778619636510326784 538544281
+##  3 778619636510326784 3092297686
+##  4 778619636510326784 363005534
+##  5 778619636510326784 46955476
+##  6 778619636510326784 16017475
+##  7 778619636510326784 116994659
+##  8 778619636510326784 10448062
+##  9 778619636510326784 65934237
+## 10 778619636510326784 749397927462703105
+## # … with 120,084 more rows</code></pre>
+<p>Note that there are over 80,000 users within two degrees of me. This is no surprise. Some of my friends on Twitter have thousands of friends, and all of these friends end up in this dataframe.</p>
+<p>In the code below, I limit the user dataframe and edgelist to users who are just one degree away from me. The “degree” column indicates the degrees of separation, so I can simply filter the dataframes to include only nodes that are fewer than 2 degrees away from me.</p>
+<pre class="r"><code># Getting nodes and edgelist
+node_tbl &lt;- user_content[[1]]
+edgelist_tbl &lt;- user_content[[2]]
+
+# Limiting dataframes to nodes one degree away
+node_tbl &lt;- node_tbl %&gt;% filter(degree &lt; 2)
+node_ids &lt;- node_tbl %&gt;% pull(id)
+edgelist_tbl &lt;- edgelist_tbl %&gt;% filter(from %in% node_ids &amp; to %in% node_ids)</code></pre>
+<p>Why didn’t I just only collect users one degree away from me in the first place? The advantage of collecting users two degrees out and then dropping the 2nd degree users is that the resulting edgelist includes ties among the friends that are one degree removed from me. Let’s look at the resulting network.</p>
+</div>
+
+<pre class="r"><code># Loading network visualization packages
+library(ggraph)
+library(igraph)
+library(ggiraph)
+library(scales)</code></pre>
+<pre class="r"><code>theme_set(theme_light())
+
+# Converting edgelist and node tibbles to a graph object
+graph &lt;- graph_from_data_frame(edgelist_tbl, vertices = node_tbl)
+
+# Creating plot
+net1 &lt;- ggraph(graph, layout = &#39;fr&#39;) +
+  geom_edge_link(width = .1) +
+  geom_point_interactive(aes(x = x, y = y, size = followers_count, color = factor(degree), tooltip = paste0(name, &quot;: &quot;, location))) +
+  scale_size_continuous(name = &quot;Number of Followers&quot;, label = comma) +
+  scale_color_discrete(name = &quot;Degree&quot;, labels = c(&quot;Ego&quot;, &quot;First&quot;)) +
+  ggtitle(&quot;My Twitter Network&quot;) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+# Making it interactive
+girafe(ggobj = net1, width_svg = 8, height_svg = 8,
+       options = list(opts_sizing(rescale = FALSE)))</code></pre>
+
+<iframe src="test_widget.html" width="100%" height="550" scrolling="no" frameborder="0"></iframe>
+
+<p>My twitter network has one cluster of users that are highly interconnected. Hover over these nodes and you will see that these are data scientists and R programmers. Otherwise, the people I follow on Twitter are sparsely interconnected.</p>
+<p>What if I want to conduct a more refined search of a Twitter community? For instance, I may wish to limit my search to data scientists and statisticians. To do this, I use the filter_col and filter_val parameters. filter_col takes the column name of the user dataframe according to which I want to narrow my search. I can use this to limit my search to users whose description field contains a term or set of terms, whose location gives a certain place, or whose followers_count (number of followers) is greater than or less than a certain number. The filter_val parameter is the value(s) according to which I want to filter the results.</p>
+<p>To limit my search to data scientists and statisticians, I’ll only include users that mention “data scientist” or “statistician” in their description field. To put this, I enter “description” in the filter_col field and “(data scientist|statistician)” in the filter_val field. Because only a subset of the people I follow on Twitter are data scientists/statisticians, I’ll go three degrees out to collect an adequately large sample.</p>
+<pre class="r"><code>user_content &lt;- get_user_network(screen_name = &quot;Andrew_Carr24&quot;, degree = 3, token = api_token,
+                                 filter_col = &quot;description&quot;, filter_val = &quot;(data scientist|statistician)&quot;)</code></pre>
+<pre class="r"><code># Getting nodes and edgelist
+node_tbl &lt;- user_content[[1]]
+edgelist_tbl &lt;- user_content[[2]]
+
+node_tbl</code></pre>
+<pre><code>## # A tibble: 5,360 x 10
+##    id     screen_name  name  friends_count followers_count location description
+##    &lt;chr&gt;  &lt;chr&gt;        &lt;chr&gt;         &lt;int&gt;           &lt;int&gt; &lt;chr&gt;    &lt;chr&gt;
+##  1 77861… Andrew_Carr… Andr…            94             104 &quot;Durham… Sociology P…
+##  2 14505… minimaxir    Max …           401           10379 &quot;San Fr… Data Scient…
+##  3 10817… koehrsen_wi… Will…            85            8514 &quot;Illino… Data Scient…
+##  4 76965… MariannaFoos Mari…           614             647 &quot;Boston… Former benc…
+##  5 92351… R_by_Ryo     ⚽️Ry…           593            3667 &quot;Tokyo-… #rstats | M…
+##  6 15582… kareem_carr  🔥 Ka…           850           64507 &quot;Cambri… Statisticia…
+##  7 29919… rlbarter     Rebe…           508            2435 &quot;&quot;       Data Scient…
+##  8 46646… aschinchon   Anto…           671            3438 &quot;Madrid… Maths, gene…
+##  9 82171… _RCharlie    Char…           433             806 &quot;&quot;       Data scient…
+## 10 14629… JonTheGeek   Jon …          1637            3232 &quot;Austin… Admin of @R…
+## # … with 5,350 more rows, and 3 more variables: url &lt;chr&gt;,
+## #   profile_image_url &lt;chr&gt;, degree &lt;dbl&gt;</code></pre>
+<p>The resulting user data is about five thousand rows, meaning that there are about 5500 self-described data scientists/statisticians three degrees away from me on Twitter. Let’s see how the data breaks down by degree.</p>
+<pre class="r"><code>node_tbl %&gt;% count(degree)</code></pre>
+<pre><code>## # A tibble: 4 x 2
+##   degree     n
+##    &lt;dbl&gt; &lt;int&gt;
+## 1      0     1
+## 2      1    11
+## 3      2   399
+## 4      3  4949</code></pre>
+<p>I follow 11 data scientists, who follow about 400 data scientists, who follow about 5000 data scientists.</p>
+<p>At this point, there are many ways that we could analyze this data. The data include image urls. We could plug users’ images into a neural network that predicts a person’s gender and age from their image, such as Python’s (pyagender module)[<a href="https://pypi.org/project/py-agender/" class="uri">https://pypi.org/project/py-agender/</a>]. If we don’t want to bring in neural networks, we could predict gender from the user’s name with R’s (gender package)[<a href="https://rdrr.io/cran/gender/f/vignettes/predicting-gender.Rmd" class="uri">https://rdrr.io/cran/gender/f/vignettes/predicting-gender.Rmd</a>].</p>
+<p>Instead, I’m going to geocode each user by plugging the text from the location field into the geo function from R (tidygeocoder package)[<a href="https://cran.r-project.org/web/packages/tidygeocoder/index.html" class="uri">https://cran.r-project.org/web/packages/tidygeocoder/index.html</a>]. This function takes a string as input and plugs this into a geocoding tool based on the “method” parameter. I’m going to use the OpenStreetMap (osm) geocoder. After dropping users with missing locations from the data, I create a character vector of user locations. Then I run a for loop, and at each iteration I geocode an address and add the coordinates to a list of location coordinates. Finally, I create a new tibble, node_tbl_with_locs, which consists of geolocated users and their geographic coordinates, and remove users for which a location was not found.</p>
+<pre class="r"><code>library(tidygeocoder)
+
+# Dropping users without location (~30% of observations)
+locs_vec &lt;- node_tbl %&gt;% filter(!is.na(location) &amp; location != &quot;&quot;) %&gt;% pull(location)
+
+count &lt;-1
+locs_lst &lt;- list()
+for(address in locs_vec){
+
+  locs_lst[[count]] &lt;- geo(address, method = &quot;osm&quot;)
+  count &lt;- count +1
+
+  if(count %% 100 == 0){
+    print(count)
+  }
+
+}
+
+# Binding latitude and longitude coordinates into node_tbl with missing locations dropped
+node_tbl_with_locs &lt;- bind_cols(
+  node_tbl %&gt;% filter(!is.na(location) &amp; location != &quot;&quot;),
+  do.call(&#39;rbind&#39;, locs_lst) %&gt;% select(lat, long)
+)
+
+# Dropping users with missing locations
+node_tbl_with_locs &lt;- node_tbl_with_locs %&gt;% filter(!is.na(lat))</code></pre>
+<p>Let’s have a look and the most common locations to which users have been geolocated.</p>
+<pre class="r"><code>top_locs &lt;- node_tbl_with_locs %&gt;% group_by(lat) %&gt;% mutate(n = n()) %&gt;%
+  slice(1) %&gt;% ungroup %&gt;% arrange(desc(n)) %&gt;%
+  head() %&gt;% select(location, lat, long, n)
+
+top_locs %&gt;% select(location, n)</code></pre>
+<pre><code>## # A tibble: 6 x 2
+##   location            n
+##   &lt;chr&gt;           &lt;int&gt;
+## 1 London, England   201
+## 2 San Francisco     151
+## 3 New York, NY      149
+## 4 Washington, DC     82
+## 5 Chicago, IL        82
+## 6 Seattle, WA        74</code></pre>
+<p>The five most common cities among data scientists in my network are London, San Francisco, New York City, Washington DC, and Seattle, in that order. It is a bit surprising that London is the most common city in the data.It is a bit surprising that London is the most common city in the data. This may be a result of my particular network. The ranking of U.S. cities, on the other hand, is exactly what one would expect given the geographic distribution of data science jobs in the United States.</p>
+<p>Let’s look more closely at where U.S. data scientists are located in this data.</p>
+<pre class="r"><code>locations_tbl &lt;- node_tbl_with_locs %&gt;% group_by(lat, long) %&gt;% summarise(location = location, n = n()) %&gt;%
+  slice(1) %&gt;% ungroup %&gt;% arrange(desc(n))
+
+#### Mapping with rnaturalearth
+library(&quot;rnaturalearth&quot;)
+library(&quot;rnaturalearthdata&quot;)
+library(&quot;plotly&quot;)
+
+world &lt;- ne_countries(scale = &quot;medium&quot;, returnclass = &quot;sf&quot;)
+
+united_states_tweets &lt;- ggplotly(
+  ggplot(data = world) +
+    geom_sf() +
+    geom_point(locations_tbl,
+               mapping = aes(long, lat, text = location, size = n), alpha = .2) +
+    coord_sf(xlim = c(-123, -70), ylim = c(25, 51)) +
+    labs(color = &quot;&quot;, x = &quot;Longitude&quot;, y = &quot;Latitude&quot;) +
+    ggtitle(&quot;Geographic Distribution of U.S. Data Scientists in My Network&quot;) +
+    theme(plot.title = element_text(hjust = 0.5)), tooltip = c(&quot;text&quot;)
+)</code></pre>
+<pre class="r"><code>united_states_tweets</code></pre>
+<p>This map was created by aggregating users to the location level. The size of the points reflects the number of data scientists in each location. The largest points are in San Francisco, New York, Seattle, Austin, DC, and Chicago. There are some errors in the data. These are a result of ambiguous entries in the location field (e.g., “New Haven by way of Chicago”) and imperfections in osm’s geocoding method. Still, the map gives a sense of where data scientists in my network are located.</p>
+<p>To give another example, what if we wanted to collect the network of PhD students in the social sciences on Twitter? This can be done by using the get_user_network function in combination with some regular expression syntax.</p>
+<pre class="r"><code># Making vector of social science disciplines
+ss_disciplines &lt;- c(&quot;sociology|sociology&quot;, &quot;economics|economics&quot;, &quot;anthropology|anthropology&quot;, &quot;political science|political science&quot;, &quot;psychology|psychology&quot;)
+
+# Turning vector into string with elements separated by &quot;|&quot;
+ss_disciplines_str &lt;- paste(ss_disciplines, collapse = &quot;|&quot;)
+
+# Discipline name must be included in string that also has &quot;phd student&quot; or &quot;phd candidate
+ss_disciplines_str &lt;- paste0(&quot;(phd (student|candidate).*&quot;, ss_disciplines_str, &quot;.*phd (student|candidate))&quot;)</code></pre>
+<p>The <code>ss_disciplines_str</code> string will limit the results to users whose description has “phd student” or “phd candidate” as well as one of the disciplines in <code>ss_disciplines</code>. The filter matching feature of get_user_network is not case sensitive, so it does not matter if any of these words are capitalized. Let’s run the get_user_network function and see what we get. I’m going to use myself as the “focal” user and go 4 degrees out.</p>
+<pre class="r"><code>user_content &lt;- get_user_network(screen_name = &quot;Andrew_Carr24&quot;, degree = 4, token = api_token,
+                                 filter_col = &quot;description&quot;, filter_val = ss_disciplines_str)
+
+phd_nodes &lt;- user_content[[1]]
+phd_edgelist &lt;- user_content[[2]]</code></pre>
+<pre class="r"><code>node_tbl</code></pre>
+<pre><code>## # A tibble: 2,830 x 10
+##         id screen_name  name  friends_count followers_count location description
+##      &lt;dbl&gt; &lt;chr&gt;        &lt;chr&gt;         &lt;dbl&gt;           &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;
+##  1 7.79e17 Andrew_Carr… Andr…            95             105 Durham,… &quot;Sociology…
+##  2 6.15e 8 JosephRoso   Jose…           212              94 Durham,… &quot;PhD candi…
+##  3 4.04e 7 Oskarryden   Oska…          3744            1331 Gothenb… &quot;PhD stude…
+##  4 1.19e 8 allisonstol… Alli…           289             128 &lt;NA&gt;     &quot;Joint Soc…
+##  5 1.93e 8 Devin_Corne… Devi…           424             304 Durham,… &quot;Sociology…
+##  6 9.47e17 Robert_Dors… Robe…           399             261 Cambrid… &quot;PhD Candi…
+##  7 2.21e 9 AVanRemoort… Anna…           344             121 &lt;NA&gt;     &quot;Sociology…
+##  8 9.08e17 uhmanduhdawn Aman…          1592            1715 San Ant… &quot;PhD Candi…
+##  9 1.64e 9 Claire_LeBar Clai…           659             142 Toronto  &quot;PhD candi…
+## 10 2.29e 9 taywbrown    Tayl…           283             641 &lt;NA&gt;     &quot;Computati…
+## # … with 2,820 more rows, and 3 more variables: url &lt;chr&gt;,
+## #   profile_image_url &lt;chr&gt;, degree &lt;dbl&gt;</code></pre>
+<p>I have 2,830 social science PhD students in my network (at most four degrees separated from me). What’s the breakdown of these users into the social science disciplines? We can figure this out by some additional string matching on the description field.</p>
+<pre class="r"><code># Adding group column based on disciplines
+node_tbl &lt;- node_tbl %&gt;%
+  mutate(group = case_when(str_detect(tolower(description), ss_disciplines[1]) ~ &quot;sociology&quot;,
+                           str_detect(tolower(description), ss_disciplines[2]) ~ &quot;economics&quot;,
+                           str_detect(tolower(description), ss_disciplines[3]) ~ &quot;anthro&quot;,
+                           str_detect(tolower(description), ss_disciplines[4]) ~ &quot;poli sci&quot;,
+                           str_detect(tolower(description), ss_disciplines[5]) ~ &quot;psych&quot;))</code></pre>
+<p>Let’s look at the network of users by discipline. Given the large number of users, I’ll refrain from using an interactive plot.</p>
+<pre class="r"><code># Converting edgelist and node tibbles to a graph object
+graph &lt;- graph_from_data_frame(edgelist_tbl, vertices = node_tbl)
+
+# Creating plot
+net2 &lt;- ggraph(graph, layout = &#39;fr&#39;) +
+  geom_edge_link(width = .1) +
+  geom_point_interactive(aes(x = x, y = y, size = followers_count, color = factor(group), tooltip = paste0(name, &quot;: &quot;, location))) +
+  scale_size_continuous(name = &quot;Number of Followers&quot;, label = comma, range = c(.1, 5)) +
+  scale_color_discrete(name = &quot;PhD Discipline&quot;) +
+  ggtitle(&quot;Social Science PhD Students by Discipline&quot;) +
+  theme(plot.title = element_text(hjust = 0.5))</code></pre>
+<pre class="r"><code># PhD Students Twitter Network
+net2</code></pre>
+<p>According to the plot, sociology and economics students are highly separated in distinct clusters, while psychology and political science students are more diffusely distributed throughout the network. There are fewer anthropology students than students in the other disciplines. This may reflect that there are fewer anthropology PhD students on Twitter, or it could be a feature of my particular Twitter network. We could adjucicate between these possibilities by rerunning this analysis a few times on a set of randomly selected “focal” users.</p>
+<p>Twittcrawler also supports filtering users by multiple conditions. To do this, we enter lists of column names and filter conditions in the filter_col and filter_val parameters. Returning to the data science example, we could limit the search to data scientists located in New York by entering <code>list(&quot;description&quot;, &quot;location&quot;)</code> in the filter_col argument and <code>list(&quot;(data scientist|statistician)&quot;, &quot;(new york|nyc)&quot;)</code> in the filter_val argument. We also need to specify whether include users that match all of the filter conditions or any of the filter conditions. To do this, set the filter_logic argument to “any” or “all”. To collect data scientists in new york, we would set this argument to “all”.</p>
+
+
+</div>
+
+
+
+
+<script src="//yihui.name/js/math-code.js"></script>
+<script async
+src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML">
+</script>
+
+</div>
+
+<div class="pagination">
+<a href="/post/mapping-the-underlying-social-structure-of-reddit" class="left arrow">&#8592;</a>
+
+<a href="#" class="top">Top</a>
+</div>
+</main>
+
+
+        <footer>
+    <span>
+    &copy; <time datetime="2019-11-01 14:08:56.250447 -0400 EDT m=&#43;6.662286260">2021</time> Andrew Carr. Made with <a href='https://gohugo.io'>Hugo</a> using the <a href='https://github.com/EmielH/tale-hugo/'>Tale</a> theme.
+    </span>
+</footer>
+
+</body>
+</html>
