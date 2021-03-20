@@ -149,7 +149,7 @@ net1 &lt;- ggraph(graph, layout = &#39;fr&#39;) +
 girafe(ggobj = net1, width_svg = 8, height_svg = 8,
        options = list(opts_sizing(rescale = FALSE)))</code></pre>
 
-<iframe src="test_widget.html" width="100%" height="550" scrolling="no" frameborder="0"></iframe>
+<iframe src="test_widget.html" width="100%" height="650" scrolling="no" frameborder="0"></iframe>
 
 <p>My twitter network has one cluster of users that are highly interconnected. Hover over these nodes and you will see that these are data scientists and R programmers. Otherwise, the people I follow on Twitter are sparsely interconnected.</p>
 <p>What if I want to conduct a more refined search of a Twitter community? For instance, I may wish to limit my search to data scientists and statisticians. To do this, I use the filter_col and filter_val parameters. filter_col takes the column name of the user dataframe according to which I want to narrow my search. I can use this to limit my search to users whose description field contains a term or set of terms, whose location gives a certain place, or whose followers_count (number of followers) is greater than or less than a certain number. The filter_val parameter is the value(s) according to which I want to filter the results.</p>
@@ -252,6 +252,9 @@ united_states_tweets &lt;- ggplotly(
     theme(plot.title = element_text(hjust = 0.5)), tooltip = c(&quot;text&quot;)
 )</code></pre>
 <pre class="r"><code>united_states_tweets</code></pre>
+
+<iframe src="map_widget.html" width="100%" height="650" scrolling="no" frameborder="0"></iframe>
+
 <p>This map was created by aggregating users to the location level. The size of the points reflects the number of data scientists in each location. The largest points are in San Francisco, New York, Seattle, Austin, DC, and Chicago. There are some errors in the data. These are a result of ambiguous entries in the location field (e.g., “New Haven by way of Chicago”) and imperfections in osm’s geocoding method. Still, the map gives a sense of where data scientists in my network are located.</p>
 <p>To give another example, what if we wanted to collect the network of PhD students in the social sciences on Twitter? This can be done by using the get_user_network function in combination with some regular expression syntax.</p>
 <pre class="r"><code># Making vector of social science disciplines
