@@ -313,8 +313,35 @@ net2</code></pre>
 <img alt="My Image" src="net2_widget.png" />
 
 <p>According to the plot, sociology and economics students are highly separated in distinct clusters, while psychology and political science students are more diffusely distributed throughout the network. There are fewer anthropology students than students in the other disciplines. This may reflect that there are fewer anthropology PhD students on Twitter, or it could be a feature of my particular Twitter network. We could adjucicate between these possibilities by rerunning this analysis a few times on a set of randomly selected “focal” users.</p>
-<p>Twittcrawler also supports filtering users by multiple conditions. To do this, we enter lists of column names and filter conditions in the filter_col and filter_val parameters. Returning to the data science example, we could limit the search to data scientists located in New York by entering <code>list(&quot;description&quot;, &quot;location&quot;)</code> in the filter_col argument and <code>list(&quot;(data scientist|statistician)&quot;, &quot;(new york|nyc)&quot;)</code> in the filter_val argument. We also need to specify whether include users that match all of the filter conditions or any of the filter conditions. To do this, set the filter_logic argument to “any” or “all”. To collect data scientists in new york, we would set this argument to “all”.</p>
+<p>Twittercrawler also supports filtering users by multiple conditions. To do this, we enter lists of column names and filter conditions in the filter_col and filter_val parameters. Returning to the data science example, we could limit the search to data scientists located in New York by entering <code>list(&quot;description&quot;, &quot;location&quot;)</code> in the filter_col argument and <code>list(&quot;(data scientist|statistician)&quot;, &quot;(new york|nyc)&quot;)</code> in the filter_val argument. We also need to specify whether include users that match all of the filter conditions or any of the filter conditions. To do this, set the filter_logic argument to “any” or “all”. To collect data scientists in new york, we would set this argument to “all”.</p>
+<pre class="r"><code># Getting network of data scientists/statisticians in new york/nyc
+user_content &lt;- get_user_network(id = &quot;778619636510326784&quot;,
+                           degree = 5,
+                           token = api_token,
+                           track_progress = TRUE,
+                           filter_col = list(&quot;description&quot;, &quot;location&quot;),
+                           filter_val = list(&quot;(data scientist|statistician)&quot;, &quot;(new york|nyc)&quot;),
+                           filter_logic = &quot;all&quot;)
 
+# Storing results as node and edgelist tibbles
+node_tbl &lt;- user_content[[1]]
+edgelist_tbl &lt;- user_content[[2]]</code></pre>
+<pre class="r"><code># Converting edgelist and node tibbles to a graph object
+graph &lt;- graph_from_data_frame(edgelist_tbl, vertices = node_tbl)
+
+# Creating plot
+net3 &lt;- ggraph(graph, layout = &#39;fr&#39;) +
+  geom_edge_link(width = .1) +
+  geom_point_interactive(aes(x = x, y = y, size = followers_count, color = factor(degree), tooltip = paste0(name, &quot;: &quot;, location))) +
+  scale_size_continuous(name = &quot;Number of Followers&quot;, label = comma, range = c(1, 5)) +
+  scale_color_discrete(name = &quot;Degree&quot;) +
+   ggtitle(&quot;Data Scientists in NYC&quot;) +
+  theme(plot.title = element_text(hjust = 0.5))</code></pre>
+<pre class="r"><code>girafe(ggobj = net3, width_svg = 8, height_svg = 8,
+       options = list(opts_sizing(rescale = FALSE)))</code></pre>
+
+<iframe src="net3_widget.html" width="100%" height="650" scrolling="no" frameborder="0"></iframe>
+      
 
 </div>
 
