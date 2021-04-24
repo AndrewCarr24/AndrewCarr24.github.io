@@ -352,9 +352,9 @@ options = list(opts_sizing(rescale = FALSE)))</code></pre>
 
 <p>The network above shows all data scientists based on New York who are within five degrees of me on Twitter. The nodes are given different colors to indicate the number of degrees they are from me in the network. Although the structure of this network is not particularly informative, combining filter conditions lets you use twittercrawler to find particular kinds of people in your, or someone else’s, social network.</p>
 <div id="a-word-on-rate-limiting" class="section level3">
-<h3>A Word on Rate Limiting</h3>
+<h2>A Word on Rate Limiting</h2>
 <p>One limitation of the Twitter API that I have not mentioned so far is rate limiting. Twitter restricts the amount of data that users can collect over a given period of time. The twittercrawler package accommodates these restrictions by halting data collection for the necessary amount of time once a rate limit has been reached and printing a message in the R console and indicating the wait time before data collection can resume. Users should beware, however, that rate limiting can considerably slow down the process of collecting network data. Some data collection tasks can take several hours, and you may want to run twittercrawler in the background (in a separate R console) while the package collects larger quantities of network data.</p>
-<p>Thanks for reading about the twittercrawler package. To collect your own network data, install the package from my Github page (<a href="https://github.com/AndrewCarr24/twittercrawler" class="uri">https://github.com/AndrewCarr24/twittercrawler</a>)[<a href="https://github.com/AndrewCarr24/twittercrawler" class="uri">https://github.com/AndrewCarr24/twittercrawler</a>].</p>
+<p>Thanks for reading about the twittercrawler package. To collect your own network data, install the package from my Github page (<a href="https://github.com/AndrewCarr24/twittercrawler" class="uri">https://github.com/AndrewCarr24/twittercrawler</a>).</p>
 
 </div>
 
