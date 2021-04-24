@@ -252,8 +252,9 @@ united_states_tweets &lt;- ggplotly(
     labs(color = &quot;&quot;, x = &quot;Longitude&quot;, y = &quot;Latitude&quot;) +
     ggtitle(&quot;Geographic Distribution of U.S. Data Scientists in My Network&quot;) +
     theme(plot.title = element_text(hjust = 0.5)), tooltip = c(&quot;text&quot;)
-)</code></pre>
-<pre class="language-r"><code>united_states_tweets</code></pre>
+)
+
+united_states_tweets</code></pre>
 
 <iframe src="map_widget.html" width="100%" height="650" scrolling="no" frameborder="0"></iframe>
 
@@ -272,8 +273,9 @@ ss_disciplines_str &lt;- paste0(&quot;(phd (student|candidate).*&quot;, ss_disci
                                  filter_col = &quot;description&quot;, filter_val = ss_disciplines_str)
 
 phd_nodes &lt;- user_content[[1]]
-phd_edgelist &lt;- user_content[[2]]</code></pre>
-<pre class="language-r"><code>node_tbl</code></pre>
+phd_edgelist &lt;- user_content[[2]]
+
+node_tbl</code></pre>
 <pre><code>## # A tibble: 2,830 x 10
 ##         id screen_name  name  friends_count followers_count location description
 ##      &lt;dbl&gt; &lt;chr&gt;        &lt;chr&gt;         &lt;dbl&gt;           &lt;dbl&gt; &lt;chr&gt;    &lt;chr&gt;
@@ -329,8 +331,9 @@ user_content &lt;- get_user_network(id = &quot;778619636510326784&quot;,
 
 # Storing results as node and edgelist tibbles
 node_tbl &lt;- user_content[[1]]
-edgelist_tbl &lt;- user_content[[2]]</code></pre>
-<pre class="language-r"><code># Converting edgelist and node tibbles to a graph object
+edgelist_tbl &lt;- user_content[[2]]
+
+# Converting edgelist and node tibbles to a graph object
 graph &lt;- graph_from_data_frame(edgelist_tbl, vertices = node_tbl)
 
 # Creating plot
@@ -340,9 +343,10 @@ net3 &lt;- ggraph(graph, layout = &#39;fr&#39;) +
   scale_size_continuous(name = &quot;Number of Followers&quot;, label = comma, range = c(1, 5)) +
   scale_color_discrete(name = &quot;Degree&quot;) +
    ggtitle(&quot;Data Scientists in NYC&quot;) +
-  theme(plot.title = element_text(hjust = 0.5))</code></pre>
-<pre class="language-r"><code>girafe(ggobj = net3, width_svg = 8, height_svg = 8,
-       options = list(opts_sizing(rescale = FALSE)))</code></pre>
+  theme(plot.title = element_text(hjust = 0.5))
+  
+girafe(ggobj = net3, width_svg = 8, height_svg = 8,
+options = list(opts_sizing(rescale = FALSE)))</code></pre>
 
 <iframe src="net3_widget.html" width="100%" height="650" scrolling="no" frameborder="0"></iframe>
 
