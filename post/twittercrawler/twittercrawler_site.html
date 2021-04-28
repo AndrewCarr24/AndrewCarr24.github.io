@@ -260,14 +260,13 @@ united_states_tweets</code></pre>
 
 <p>This map was created by aggregating users to the location level. The size of the points reflects the number of data scientists in each location. The largest points are in San Francisco, New York, Seattle, Austin, DC, and Chicago. There are some errors in the data. These are a result of ambiguous entries in the location field (e.g., “New Haven by way of Chicago”) and imperfections in osm’s geocoding method. Still, the map gives a sense of where data scientists in my network are located.</p>
 <p>Alternatively, what if we wanted to collect the network of PhD students in the social sciences on Twitter? This can be done by using the get_user_network function in combination with some regular expression syntax.</p>
-<pre class="language-r"><code># Making vector of social science disciplines
-ss_disciplines &lt;- c(&quot;sociology|sociology&quot;, &quot;economics|economics&quot;, &quot;anthropology|anthropology&quot;, &quot;political science|political science&quot;, &quot;psychology|psychology&quot;)
+<pre class=" language-r" tabindex="0"><code class=" language-r"><span class="token comment"># Making vector of social science disciplines</span>
+ss_disciplines <span class="token operator">&lt;-</span> c<span class="token punctuation">(</span><span class="token string">"sociology|sociology"</span><span class="token punctuation">,</span> <span class="token string">"economics|economics"</span><span class="token punctuation">,</span> <span class="token string">"anthropology|anthropology"</span><span class="token punctuation">,</span> <span class="token string">"political science|political science"</span><span class="token punctuation">,</span> <span class="token string">"psychology|psychology"</span><span class="token punctuation">)</span>
 
-# Turning vector into string with elements separated by &quot;|&quot;
-ss_disciplines_str &lt;- paste(ss_disciplines, collapse = &quot;|&quot;)
+ss_disciplines_str <span class="token operator">&lt;-</span> paste0<span class="token punctuation">(<span class="token string">"phd (student|candidate).*"</span></span><span class="token punctuation">,</span> ss_disciplines<span class="token punctuation">, </span><span class="token string">".*phd (student|candidate)"</span><span class="token punctuation">)</span>
 
-# Discipline name must be included in string that also has &quot;phd student&quot; or &quot;phd candidate
-ss_disciplines_str &lt;- paste0(&quot;(phd (student|candidate).*&quot;, ss_disciplines_str, &quot;.*phd (student|candidate))&quot;)</code></pre>
+<span class="token comment"># Final regex - description must have discipline following or followed by "phd student" or "phd candidate"</span>
+ss_disciplines_str <span class="token operator">&lt;-</span> paste0<span class="token punctuation">(</span><span class="token string">"("</span><span class="token punctuation">,</span> paste<span class="token punctuation">(</span>ss_disciplines_str<span class="token punctuation">, </span>collapse <span class="token operator">=</span> <span class="token string">"|"</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token string">")"</span><span class="token punctuation">)</span></code></pre>
 <p>The <code>ss_disciplines_str</code> string will limit the results to users whose description has “phd student” or “phd candidate” as well as one of the disciplines in <code>ss_disciplines</code>. The filter matching feature of get_user_network is not case sensitive, so it does not matter if any of these words are capitalized. Let’s run the get_user_network function and see what we get. I’m going to use myself as the “focal” user and go 4 degrees out.</p>
 <pre class="language-r"><code>user_content &lt;- get_user_network(screen_name = &quot;Andrew_Carr24&quot;, degree = 4, token = api_token,
                                  filter_col = &quot;description&quot;, filter_val = ss_disciplines_str)
